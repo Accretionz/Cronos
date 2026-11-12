@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from "react";
-import { dayOf, formatDay, useCore, useItems } from "../../core";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
+import { dayOf, formatDay, useCore, useItems, useModules } from "../../core";
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
@@ -15,7 +15,9 @@ import {
   type TxnKind,
 } from "./model";
 import { useCategoryColors } from "./colors";
-import { RowMenu } from "./RowMenu";
+import { pointsForIncome } from "./rewards";
+import { highlightRanges } from "./search";
+import { RowMenu, Select } from "../../ui";
 
 /* ---------- Add a transaction ---------- */
 
@@ -55,7 +57,9 @@ export function TransactionForm({
   defaultDay: string;
   onDone?: () => void;
 }) {
+  const { colorFor } = useCategoryColors();
   const { store } = useCore();
+  const pointsOn = useModules().some((m) => m.id === "summon");
   const editing = Boolean(txn);
   const [kind, setKind] = useState<TxnKind>(txn?.data.kind ?? "expense");
   const [amount, setAmount] = useState(txn ? (txn.data.amountCents / 100).toFixed(2) : "");
@@ -144,14 +148,14 @@ export function TransactionForm({
       <div className="field-row">
         <label className="field">
           <span>Category</span>
-          <select value={category} onChange={(e) => setCategory(e.target.value)}>
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-            <option value={NEW_CATEGORY}>+ New category…</option>
-          </select>
+          <Select
+            value={category}
+            onChange={setCategory}
+            options={[
+              ...categories.map((c) => ({ value: c, label: c, color: colorFor(c) })),
+              { value: NEW_CATEGORY, label: "+ New category…", divider: true },
+            ]}
+          />
         </label>
         {addingNew && (
           <label className="field">
@@ -170,6 +174,11 @@ export function TransactionForm({
         </label>
       </div>
       {amount !== "" && cents === null && <p className="hint hint-error">Enter an amount like 12.50</p>}
+      {kind === "income" && pointsOn && cents !== null && pointsForIncome(cents) > 0 && (!editing || txn!.data.kind !== "income" || txn!.data.amountCents !== cents) && (
+        <p className="hint txn-points-hint">
+          <span aria-hidden>◈</span> Half of income becomes Gacha Points: +{pointsForIncome(cents).toLocaleString()} GP
+        </p>
+      )}
       {editing ? (
         <div className="form-actions">
           <span className="spacer" />
@@ -194,8 +203,32 @@ export function TransactionForm({
 /** How long the "Undo" option stays after deleting. */
 const UNDO_MS = 6000;
 
-export function TransactionList({ txns }: { txns: Transaction[] }) {
+/** Rows shown at first; more on request, so a long "All time" list stays quick. */
+const PAGE = 150;
+
+/**
+ * Transactions in the order given. `grouped` puts them under day headings (for date
+ * order); otherwise each row shows its date. `query` highlights matching words.
+ */
+export function TransactionList({
+  txns,
+  grouped = true,
+  query = "",
+  emptyText = "No transactions this month.",
+  onCategory,
+}: {
+  txns: Transaction[];
+  grouped?: boolean;
+  query?: string;
+  emptyText?: string;
+  /** Tapping a row's category tag shows only that category. */
+  onCategory?: (category: string) => void;
+}) {
   const { store } = useCore();
+  const [limit, setLimit] = useState(PAGE);
+  // A new search or filter starts from the top of the list again.
+  const listKey = txns.length ? `${txns[0].id}|${txns.length}` : "";
+  useEffect(() => setLimit(PAGE), [listKey]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleted, setDeleted] = useState<Transaction | null>(null);
   const undoTimer = useRef<number | undefined>(undefined);
@@ -232,55 +265,94 @@ export function TransactionList({ txns }: { txns: Transaction[] }) {
     return (
       <>
         {undoBar}
-        <p className="muted">No transactions this month.</p>
+        <p className="muted txn-empty">{emptyText}</p>
       </>
     );
   }
 
-  // Newest day first.
-  const byDay = new Map<string, Transaction[]>();
-  for (const t of [...txns].reverse()) {
+  const shown = txns.slice(0, limit);
+  const row = (t: Transaction, withDate: boolean) => {
     const day = dayOf(t.scheduledFor!);
-    byDay.set(day, [...(byDay.get(day) ?? []), t]);
+    return editingId === t.id ? (
+      <li key={t.id} className="txn-row is-editing">
+        <TransactionForm txn={t} defaultDay={day} onDone={() => setEditingId(null)} />
+      </li>
+    ) : (
+      <li key={t.id} className="txn-row">
+        <span className="txn-cat">
+          {onCategory ? (
+            <button type="button" className="txn-cat-btn" onClick={() => onCategory(t.data.category)} title={`Show only ${t.data.category}`}>
+              <CategoryPill category={t.data.category} />
+            </button>
+          ) : (
+            <CategoryPill category={t.data.category} />
+          )}
+        </span>
+        <span className="txn-title">
+          <Highlight text={t.title} query={query} />
+          {withDate && <span className="txn-date muted">{formatDay(day)}</span>}
+        </span>
+        <span className={`txn-amount is-${t.data.kind}`}>
+          {t.data.kind === "income" ? "+" : "−"}
+          {formatMoney(t.data.amountCents)}
+        </span>
+        <RowMenu
+          label={`Options for ${t.title}`}
+          actions={[
+            { label: "Edit", icon: "✎", onSelect: () => setEditingId(t.id) },
+            { label: "Delete", icon: "🗑", danger: true, onSelect: () => remove(t) },
+          ]}
+        />
+      </li>
+    );
+  };
+
+  // Consecutive rows on the same day share a heading.
+  const byDay: [string, Transaction[]][] = [];
+  if (grouped) {
+    for (const t of shown) {
+      const day = dayOf(t.scheduledFor!);
+      const last = byDay[byDay.length - 1];
+      if (last && last[0] === day) last[1].push(t);
+      else byDay.push([day, [t]]);
+    }
   }
 
   return (
     <div className="txn-days">
       {undoBar}
-      {[...byDay.entries()].map(([day, list]) => (
-        <section key={day}>
-          <h3 className="txn-day">{formatDay(day)}</h3>
-          <ul className="txn-list">
-            {list.map((t) =>
-              editingId === t.id ? (
-                <li key={t.id} className="txn-row is-editing">
-                  <TransactionForm txn={t} defaultDay={day} onDone={() => setEditingId(null)} />
-                </li>
-              ) : (
-                <li key={t.id} className="txn-row">
-                  <span className="txn-cat">
-                    <CategoryPill category={t.data.category} />
-                  </span>
-                  <span className="txn-title">{t.title}</span>
-                  <span className={`txn-amount is-${t.data.kind}`}>
-                    {t.data.kind === "income" ? "+" : "−"}
-                    {formatMoney(t.data.amountCents)}
-                  </span>
-                  <RowMenu
-                    label={`Options for ${t.title}`}
-                    actions={[
-                      { label: "Edit", icon: "✎", onSelect: () => setEditingId(t.id) },
-                      { label: "Delete", icon: "🗑", danger: true, onSelect: () => remove(t) },
-                    ]}
-                  />
-                </li>
-              ),
-            )}
-          </ul>
-        </section>
-      ))}
+      {grouped ? (
+        byDay.map(([day, list]) => (
+          <section key={day}>
+            <h3 className="txn-day">{formatDay(day)}</h3>
+            <ul className="txn-list">{list.map((t) => row(t, false))}</ul>
+          </section>
+        ))
+      ) : (
+        <ul className="txn-list">{shown.map((t) => row(t, true))}</ul>
+      )}
+      {txns.length > shown.length && (
+        <button type="button" className="btn-ghost txn-more" onClick={() => setLimit((n) => n + PAGE)}>
+          Show {Math.min(PAGE, txns.length - shown.length).toLocaleString()} more of {txns.length.toLocaleString()}
+        </button>
+      )}
     </div>
   );
+}
+
+/** Text with the searched words marked. */
+function Highlight({ text, query }: { text: string; query: string }) {
+  const ranges = query.trim() ? highlightRanges(text, query) : [];
+  if (!ranges.length) return <>{text}</>;
+  const parts: ReactNode[] = [];
+  let at = 0;
+  ranges.forEach(([a, b], i) => {
+    if (a > at) parts.push(text.slice(at, a));
+    parts.push(<mark key={i}>{text.slice(a, b)}</mark>);
+    at = b;
+  });
+  if (at < text.length) parts.push(text.slice(at));
+  return <>{parts}</>;
 }
 
 /* ---------- Category tag ---------- */
@@ -326,7 +398,7 @@ export function Meter({ spentCents, limitCents, label }: { spentCents: number; l
   );
 }
 
-export function CategoryBreakdown({ categories }: { categories: CategoryTotal[] }) {
+export function CategoryBreakdown({ categories, onPick }: { categories: CategoryTotal[]; onPick?: (category: string) => void }) {
   const { colorFor } = useCategoryColors();
   if (categories.length === 0) return <p className="muted">No spending yet. Set limits to track categories.</p>;
   return (
@@ -334,10 +406,17 @@ export function CategoryBreakdown({ categories }: { categories: CategoryTotal[] 
       {categories.map((c) => (
         <li key={c.category} className="cat-row">
           <div className="cat-head">
-            <span className="cat-name">
-              <span className="cat-dot" style={{ "--cat": colorFor(c.category) } as CSSProperties} aria-hidden />
-              {c.category}
-            </span>
+            {onPick ? (
+              <button type="button" className="cat-name cat-name-btn" onClick={() => onPick(c.category)} title={`Show ${c.category} transactions`}>
+                <span className="cat-dot" style={{ "--cat": colorFor(c.category) } as CSSProperties} aria-hidden />
+                {c.category}
+              </button>
+            ) : (
+              <span className="cat-name">
+                <span className="cat-dot" style={{ "--cat": colorFor(c.category) } as CSSProperties} aria-hidden />
+                {c.category}
+              </span>
+            )}
             <span className="cat-amount">
               {formatMoney(c.spentCents)}
               {c.limitCents !== undefined && <span className="muted"> / {formatMoney(c.limitCents)}</span>}

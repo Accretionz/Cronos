@@ -1,4 +1,4 @@
-import { dayOf, formatDay, todayKey } from "../../core";
+import { dayOf, formatDay } from "../../core";
 import { LevelCard, useLevel } from "./components";
 import { xpForNextLevel, xpInWeek, type XpEntry } from "./model";
 import "./game.css";
@@ -6,8 +6,8 @@ import "./game.css";
 const HISTORY_SIZE = 50;
 
 export function GamePage() {
-  const { entries, info, today } = useLevel();
-  const week = xpInWeek(entries, todayKey());
+  const { entries, info, today, day } = useLevel();
+  const week = xpInWeek(entries, day);
 
   // Newest first, grouped by day.
   const recent = [...entries].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)).slice(0, HISTORY_SIZE);

@@ -12,7 +12,7 @@
 .daily-sub { font-size: 12px; color: var(--muted); }
 .streak { font-size: 13px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .xp-pill { font-variant-numeric: tabular-nums; }
-.xp-pill.is-earned { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.xp-pill.is-earned { background: var(--gold-soft); color: var(--gold); font-weight: 600; }
 .edit-btn { font-size: 15px; }
 .edit-btn:hover { color: var(--accent); }
 
@@ -36,33 +36,7 @@
   .daily-form .segmented button { flex: 1; padding: 7px 4px; font-size: 13px; }
 }
 
-/* Dashboard card: compact list */
-.widget-toggle {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: none; border: 0; padding: 6px 4px; margin-top: 2px;
-  color: var(--accent); font-weight: 600; font-size: 13px; cursor: pointer; border-radius: 6px;
-}
-.widget-toggle:hover { background: var(--surface-2); }
-.widget-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.chevron { display: inline-block; transition: transform 0.15s; }
-.chevron.is-open { transform: rotate(180deg); }
-.done-group { margin-top: 4px; border-top: 1px solid var(--border); padding-top: 4px; }
-.done-toggle { color: var(--muted); }
-.done-tick {
-  display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 5px;
-  background: var(--accent); color: var(--accent-ink); font-size: 11px;
-}
-.done-list { animation: list-open 0.15s ease-out; }
-@keyframes list-open { from { opacity: 0; transform: translateY(-4px); } }
-/* Just checked: stays put a moment, then fades out on its way to "completed" */
-.daily-row.is-settling { animation: settle-out 1s ease-in forwards; }
-@keyframes settle-out {
-  0%, 65% { opacity: 1; }
-  100% { opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .chevron, .done-list, .daily-row.is-settling { transition: none; animation: none; }
-}
+/* Dashboard card: compact list ("Show more" and "✓ N completed" are in ui/ui.css) */
 /* Each control on its own line */
 .dailies-widget > .widget-toggle { display: flex; }
 .dailies-widget > .widget-link { display: block; width: fit-content; margin-top: 10px; }

@@ -1,5 +1,5 @@
 import { todayKey, type EventBus, type EventMap, type ItemStore } from "../../core";
-import { XP_ENTRY, levelFromXp, totalXp, type XpData, type XpEntry } from "./model";
+import { XP_ENTRY, levelFromXp, levelTitle, totalXp, type XpEntry } from "./model";
 
 const BEST_LEVEL_KEY = "cronos.game.bestLevel";
 
@@ -30,30 +30,43 @@ export function startLedger(bus: EventBus, store: ItemStore): () => void {
   };
 
   const entries = () => store.query({ type: XP_ENTRY }) as XpEntry[];
-  const findByKey = (key: string) => entries().find((e) => e.data.key === key);
+  /** Entries use a stable id per key, so two devices (or tabs) can't record the same XP twice. */
+  const idFor = (key: string) => `xp:${key}`;
+  const findByKey = (key: string) => (store.get(idFor(key)) as XpEntry | undefined) ?? entries().find((e) => e.data.key === key);
 
   const award = ({ key, amount, reason, source }: EventMap["xp.award"]) =>
     run(async () => {
       if (!key || !(amount > 0) || findByKey(key)) return; // invalid or already paid out
       const best = Math.max(readBestLevel(), levelFromXp(totalXp(entries())).level);
-      await store.create<XpData>({
+      const now = new Date().toISOString();
+      const entry: XpEntry = {
+        id: idFor(key),
         type: XP_ENTRY,
         title: reason,
+        status: "open",
         scheduledFor: todayKey(),
+        tags: [],
         data: { amount: Math.round(amount), key, source },
-      });
+        createdAt: now,
+        updatedAt: now,
+      };
+      await store.putQuietly(entry);
       const after = levelFromXp(totalXp(entries()));
-      bus.emit("game.xpGained", { amount: Math.round(amount), reason, total: after.total });
+      bus.emit("game.xpGained", { key, amount: Math.round(amount), reason, total: after.total });
+      bus.emit("app.notify", { text: `+${Math.round(amount)} XP · ${reason}` });
       if (after.level > best) {
         writeBestLevel(after.level);
         bus.emit("game.levelUp", { level: after.level, total: after.total });
+        bus.emit("app.notify", { text: `Level up! You reached level ${after.level} · ${levelTitle(after.level)}`, big: true, icon: "★" });
       }
     });
 
   const revoke = ({ key }: EventMap["xp.revoke"]) =>
     run(async () => {
       const entry = findByKey(key);
-      if (entry) await store.remove(entry.id);
+      if (!entry) return;
+      await store.remove(entry.id);
+      bus.emit("game.xpRevoked", { key, amount: entry.data.amount });
     });
 
   const offAward = bus.on("xp.award", award);

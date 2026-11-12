@@ -1,18 +1,26 @@
 import type { Item } from "./types";
 
 /**
- * Where items physically live. The ItemStore talks only to this interface,
- * so switching to cloud sync later means writing one new adapter.
+ * Where items live. The ItemStore talks only to this interface. In the app it's the
+ * signed-in account in Supabase (account/adapter.ts); tests use memory.
  */
 export interface StorageAdapter {
+  /** "cloud" = the signed-in account in Supabase; "memory" = lost when the page closes (tests). */
+  readonly kind: "cloud" | "memory";
   loadAll(): Promise<Item[]>;
   put(item: Item): Promise<void>;
   delete(id: string): Promise<void>;
+  /** Replace everything in one go (used when restoring a backup). */
+  replaceAll(items: Item[]): Promise<void>;
 }
 
-/** Keeps everything in memory. Used for tests, or when IndexedDB is unavailable. */
+/** Keeps everything in memory. Used for tests. */
 export class MemoryAdapter implements StorageAdapter {
+  readonly kind = "memory" as const;
   private items = new Map<string, Item>();
+  constructor(initial: Item[] = []) {
+    initial.forEach((i) => this.items.set(i.id, i));
+  }
   async loadAll() {
     return [...this.items.values()];
   }
@@ -22,54 +30,7 @@ export class MemoryAdapter implements StorageAdapter {
   async delete(id: string) {
     this.items.delete(id);
   }
-}
-
-/** Saves items in the browser's IndexedDB, so data survives reloads and works offline. */
-export class IndexedDBAdapter implements StorageAdapter {
-  private dbPromise: Promise<IDBDatabase>;
-
-  constructor(dbName = "cronos", private storeName = "items") {
-    this.dbPromise = new Promise((resolve, reject) => {
-      const req = indexedDB.open(dbName, 1);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains(storeName)) {
-          const os = db.createObjectStore(storeName, { keyPath: "id" });
-          os.createIndex("type", "type");
-        }
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
+  async replaceAll(items: Item[]) {
+    this.items = new Map(items.map((i) => [i.id, i]));
   }
-
-  private async tx<T>(mode: IDBTransactionMode, run: (os: IDBObjectStore) => IDBRequest<T>) {
-    const db = await this.dbPromise;
-    return new Promise<T>((resolve, reject) => {
-      const req = run(db.transaction(this.storeName, mode).objectStore(this.storeName));
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  loadAll() {
-    return this.tx<Item[]>("readonly", (os) => os.getAll());
-  }
-  async put(item: Item) {
-    await this.tx("readwrite", (os) => os.put(item));
-  }
-  async delete(id: string) {
-    await this.tx("readwrite", (os) => os.delete(id));
-  }
-}
-
-/** Pick the best available adapter for this environment. */
-export function defaultAdapter(): StorageAdapter {
-  try {
-    if (typeof indexedDB !== "undefined") return new IndexedDBAdapter();
-  } catch {
-    /* fall through */
-  }
-  console.warn("[storage] IndexedDB unavailable, data will not be saved");
-  return new MemoryAdapter();
 }

@@ -38,9 +38,10 @@ export function startScheduler(bus: EventBus): () => void {
 
   check();
   const timer = setInterval(check, 60_000);
-  document.addEventListener("visibilitychange", check);
+  const hasDocument = typeof document !== "undefined";
+  if (hasDocument) document.addEventListener("visibilitychange", check);
   return () => {
     clearInterval(timer);
-    document.removeEventListener("visibilitychange", check);
+    if (hasDocument) document.removeEventListener("visibilitychange", check);
   };
 }

@@ -17,7 +17,9 @@ export type XpEntry = Item<XpData>;
 declare module "../../core/bus" {
   interface EventMap {
     /** XP was actually recorded (duplicates and revoked awards don't fire this). */
-    "game.xpGained": { amount: number; reason: string; total: number };
+    "game.xpGained": { key: string; amount: number; reason: string; total: number };
+    /** XP was actually taken back (fires after the matching xpGained, in order). */
+    "game.xpRevoked": { key: string; amount: number };
     "game.levelUp": { level: number; total: number };
   }
 }

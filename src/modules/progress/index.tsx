@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { addDays, dayOf, todayKey, useBusEvent, useItems, type AppModule, type Item } from "../../core";
+import { addDays, dayOf, todayKey, useItems, useToday, type AppModule, type Item } from "../../core";
+import { StatTile } from "../../ui";
 
 /**
  * A tiny module that only *listens*. It imports nothing from other modules; it
@@ -23,10 +23,9 @@ export function computeStreak(completionDays: Iterable<string>, today = todayKey
 const DAILY_TYPE = "daily";
 const dailyDoneDays = (i: Item) => (Array.isArray(i.data.doneDays) ? (i.data.doneDays as string[]) : []);
 
-const CHEERS = ["Nice!", "Done and dusted.", "One more down.", "Keep it rolling.", "Great work."];
-
-function ProgressWidget() {
-  const today = todayKey();
+/** Today page tile: the streak, plus how much got done today. */
+function ProgressStat() {
+  const today = useToday();
   const doneToday = useItems({ status: "done", completedOn: today });
   const allDone = useItems({ status: "done" });
   const dailies = useItems({ type: DAILY_TYPE });
@@ -35,24 +34,16 @@ function ProgressWidget() {
     [...allDone.filter((i) => i.completedAt).map((i) => dayOf(i.completedAt!)), ...dailies.flatMap(dailyDoneDays)],
     today,
   );
-  const [cheer, setCheer] = useState<string | null>(null);
-
-  const cheerUp = () => setCheer(CHEERS[Math.floor(Math.random() * CHEERS.length)]);
-  useBusEvent("item.completed", cheerUp);
-  useBusEvent("xp.award", cheerUp);
-
+  const done = doneToday.length + dailiesToday;
+  const keepGoing = done === 0 && streak > 0;
   return (
-    <div className="stats">
-      <div className="stat">
-        <span className="stat-value">{doneToday.length + dailiesToday}</span>
-        <span className="stat-label">done today</span>
-      </div>
-      <div className="stat">
-        <span className="stat-value">{streak}</span>
-        <span className="stat-label">day streak</span>
-      </div>
-      {cheer && <p className="cheer">{cheer}</p>}
-    </div>
+    <StatTile
+      label="Streak"
+      icon="🔥"
+      value={streak}
+      unit={streak === 1 ? "day" : "days"}
+      detail={keepGoing ? "Finish one thing today to keep it" : `${done} done today`}
+    />
   );
 }
 
@@ -61,7 +52,7 @@ export const progressModule: AppModule = {
   name: "Progress",
   icon: "★",
   description: "Completions today and your daily streak. The starting point for challenges and XP.",
-  widgets: [{ id: "progress", title: "Progress", component: ProgressWidget, order: 5 }],
+  widgets: [{ id: "progress", title: "Streak", component: ProgressStat, order: 4, slot: "stat" }],
   init({ bus }) {
     // Modules can react to app-wide events with no UI on screen.
     return bus.on("day.started", ({ date, previousDate }) => {

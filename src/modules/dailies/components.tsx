@@ -5,7 +5,9 @@ import {
   ALL_DAYS,
   DAILY,
   DIFFICULTY_LABELS,
+  PERFECT_DAY_POINTS,
   PERFECT_DAY_XP,
+  POINTS_BY_DIFFICULTY,
   WEEKDAY_NAMES,
   WEEKDAY_SHORT,
   XP_BY_DIFFICULTY,
@@ -39,6 +41,7 @@ export function DailyRow({
   const done = isDoneOn(daily, day);
   const streak = streakOf(daily, day);
   const xp = XP_BY_DIFFICULTY[daily.data.difficulty];
+  const points = POINTS_BY_DIFFICULTY[daily.data.difficulty];
 
   return (
     <li className={`daily-row${done ? " is-done" : ""}${due ? "" : " is-off"}${className ? ` ${className}` : ""}`}>
@@ -64,7 +67,9 @@ export function DailyRow({
           🔥 {streak}
         </span>
       )}
-      <span className={`pill xp-pill${done ? " is-earned" : ""}`}>+{xp} XP</span>
+      <span className={`pill xp-pill${done ? " is-earned" : ""}`} title={`${xp} XP and ${points} Gacha Points`}>
+        +{xp} XP · {points} GP
+      </span>
       {onEdit && (
         <button className="icon-btn edit-btn" aria-label={`Edit ${daily.title}`} onClick={onEdit}>
           ✎
@@ -124,7 +129,7 @@ export function DailyForm({ daily, onDone }: { daily?: Daily; onDone: () => void
         <div className="segmented" role="group" aria-label="Difficulty">
           {(Object.keys(DIFFICULTY_LABELS) as Difficulty[]).map((d) => (
             <button key={d} type="button" aria-pressed={difficulty === d} onClick={() => setDifficulty(d)}>
-              {DIFFICULTY_LABELS[d]} · {XP_BY_DIFFICULTY[d]} XP
+              {DIFFICULTY_LABELS[d]} · {XP_BY_DIFFICULTY[d]} XP · {POINTS_BY_DIFFICULTY[d]} GP
             </button>
           ))}
         </div>
@@ -171,6 +176,8 @@ export function TodaySummary({ dailies, day }: { dailies: Daily[]; day: string }
   const perfect = due.length > 0 && done.length === due.length;
   const xpToday =
     done.reduce((sum, d) => sum + XP_BY_DIFFICULTY[d.data.difficulty], 0) + (perfect ? PERFECT_DAY_XP : 0);
+  const pointsToday =
+    done.reduce((sum, d) => sum + POINTS_BY_DIFFICULTY[d.data.difficulty], 0) + (perfect ? PERFECT_DAY_POINTS : 0);
   if (due.length === 0) return null;
 
   return (
@@ -182,7 +189,9 @@ export function TodaySummary({ dailies, day }: { dailies: Daily[]; day: string }
           </strong>{" "}
           done today
         </span>
-        <span className="muted">+{xpToday} XP</span>
+        <span className="muted">
+          +{xpToday} XP · +{pointsToday} GP
+        </span>
       </div>
       <div
         className="meter"
@@ -194,7 +203,11 @@ export function TodaySummary({ dailies, day }: { dailies: Daily[]; day: string }
       >
         <div className="meter-fill" style={{ width: `${(done.length / due.length) * 100}%` }} />
       </div>
-      {perfect && <p className="perfect">✓ Perfect day! Every daily done (+{PERFECT_DAY_XP} XP bonus).</p>}
+      {perfect && (
+        <p className="perfect">
+          ✓ Perfect day! Every daily done (+{PERFECT_DAY_XP} XP and +{PERFECT_DAY_POINTS} GP bonus).
+        </p>
+      )}
     </div>
   );
 }

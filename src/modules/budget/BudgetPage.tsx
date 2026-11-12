@@ -1,13 +1,22 @@
-import { useState } from "react";
-import { AddTransactionForm, CategoryBreakdown, LimitsEditor, TransactionList } from "./components";
+import { useRef, useState } from "react";
+import { AddTransactionForm, CategoryBreakdown, LimitsEditor } from "./components";
 import { useMonthBudget } from "./hooks";
 import { SpendingPie } from "./SpendingPie";
 import { currentMonth, defaultDayFor, formatMoney, monthLabel, shiftMonth } from "./model";
+import { DEFAULT_FILTER, isFiltering, type TxnFilter } from "./search";
+import { TransactionFinder } from "./TransactionFinder";
 import "./budget.css";
 
 export function BudgetPage() {
   const [month, setMonth] = useState(currentMonth);
   const [editingLimits, setEditingLimits] = useState(false);
+  const [filter, setFilter] = useState<TxnFilter>(DEFAULT_FILTER);
+  const listRef = useRef<HTMLElement>(null);
+  // From the category list: show that category's transactions this month.
+  const showCategory = (category: string) => {
+    setFilter((f) => ({ ...f, categories: [category], kind: "all", period: f.period === "custom" ? "month" : f.period }));
+    listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const { txns, limits, summary } = useMonthBudget(month);
 
   const net = summary.incomeCents - summary.expenseCents;
@@ -52,9 +61,11 @@ export function BudgetPage() {
             <h2 className="card-title">Add transaction</h2>
             <AddTransactionForm key={month} defaultDay={defaultDayFor(month)} />
           </section>
-          <section className="card">
-            <h2 className="card-title">Transactions</h2>
-            <TransactionList txns={txns} />
+          <section className="card finder-card" ref={listRef}>
+            <h2 className="card-title">
+              Transactions{!isFiltering(filter) && txns.length > 0 && <span className="finder-count"> · {txns.length}</span>}
+            </h2>
+            <TransactionFinder month={month} filter={filter} onChange={setFilter} />
           </section>
         </div>
 
@@ -75,7 +86,7 @@ export function BudgetPage() {
                 onDone={() => setEditingLimits(false)}
               />
             ) : (
-              <CategoryBreakdown categories={summary.categories} />
+              <CategoryBreakdown categories={summary.categories} onPick={showCategory} />
             )}
           </section>
 

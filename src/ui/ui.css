@@ -1,0 +1,161 @@
+/* Shared UI pieces any module can use (see src/ui). Uses the app's color tokens from styles.css. */
+
+/* Row "⋯" menu */
+.row-menu-wrap { position: relative; flex-shrink: 0; }
+.row-menu-btn {
+  width: 30px; height: 30px; display: grid; place-items: center;
+  background: none; border: 0; border-radius: 8px; cursor: pointer;
+  color: var(--muted); font-size: 18px; line-height: 1; letter-spacing: 1px;
+}
+.row-menu-btn:hover, .row-menu-btn.is-open { background: var(--surface-2); color: var(--text); }
+.row-menu-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.row-menu {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 150px;
+  display: grid; padding: 4px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+  transform-origin: top right; animation: menu-in 0.12s ease-out;
+}
+.row-menu.is-up { top: auto; bottom: calc(100% + 4px); transform-origin: bottom right; }
+@keyframes menu-in { from { opacity: 0; transform: scale(0.95); } }
+.row-menu-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: none; border: 0; border-radius: 6px; padding: 8px 10px;
+  font-size: 14px; text-align: left; cursor: pointer;
+}
+.row-menu-item:hover, .row-menu-item:focus-visible { background: var(--surface-2); outline: none; }
+.row-menu-item.is-danger { color: var(--danger); }
+.row-menu-icon { width: 16px; text-align: center; font-size: 13px; }
+
+/* Modal */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 24px 16px;
+  background: rgba(10, 14, 20, 0.45); animation: modal-fade 0.15s ease-out; overflow-y: auto;
+}
+.modal {
+  position: relative; width: min(560px, 100%); max-height: calc(100vh - 48px); overflow-y: auto;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3); padding: 20px; outline: none; animation: modal-in 0.18s ease-out;
+}
+.modal.is-wide { width: min(820px, 100%); }
+.modal-close {
+  position: absolute; top: 12px; right: 12px; z-index: 1; width: 32px; height: 32px; display: grid; place-items: center;
+  border: 1px solid var(--border); border-radius: 50%; background: var(--surface-2); color: var(--text); cursor: pointer; font-size: 16px;
+}
+.modal-close:hover { background: var(--border); }
+.modal-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@keyframes modal-fade { from { opacity: 0; } }
+@keyframes modal-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
+@media (max-width: 600px) {
+  .modal-backdrop { padding: 0; place-items: end stretch; }
+  .modal { width: 100%; max-height: 92vh; border-radius: 16px 16px 0 0; padding: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal, .modal-backdrop { animation: none; }
+  .row-menu { animation: none; }
+}
+
+/* Stat tile (Today page numbers) */
+.stat-tile {
+  display: flex; flex-direction: column; gap: 4px; min-width: 0; height: 100%;
+  padding: 14px 16px; border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--border); color: var(--text); text-decoration: none;
+  transition: border-color 0.12s, background-color 0.12s, transform 0.12s var(--ease);
+}
+.stat-tile.is-link:hover { border-color: var(--border-strong); background: color-mix(in srgb, var(--surface-2) 45%, var(--surface)); }
+.stat-tile.is-link:active { transform: translateY(1px); }
+.stat-tile.is-accent { background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
+.stat-tile-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+}
+.stat-tile-icon { font-size: 13px; letter-spacing: 0; color: var(--gold); }
+.stat-tile-value {
+  display: flex; align-items: baseline; gap: 5px; min-width: 0;
+  font-family: var(--font-display); font-size: 30px; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.stat-tile-unit { font-size: 14px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+.stat-tile-bar { display: block; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin: 2px 0; }
+.stat-tile-bar > span { display: block; height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.4s var(--ease); }
+.stat-tile-detail {
+  font-size: 13px; color: var(--muted); margin-top: auto; overflow: hidden;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+}
+@media (max-width: 700px) {
+  .stat-tile { padding: 12px 14px; }
+  .stat-tile-value { font-size: 22px; }
+  .stat-tile-detail { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stat-tile, .stat-tile-bar > span { transition: none; }
+}
+
+/* Dropdown (ui/Select.tsx): closed it matches the other fields; open it's a themed list */
+.ui-select {
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 8px;
+  min-height: var(--control-h); min-width: 0; max-width: 100%; padding: 0 10px 0 12px;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s, background-color 0.12s;
+}
+.ui-select.is-sm { min-height: var(--control-h-sm); font-size: 13px; padding: 0 8px 0 10px; }
+.ui-select:hover:not(:disabled) { border-color: var(--border-strong); }
+.ui-select:focus-visible, .ui-select.is-open { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+.ui-select:disabled { opacity: 0.55; cursor: not-allowed; }
+.ui-select-value { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.ui-select-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-select-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+.ui-select-list {
+  position: fixed; z-index: 1000; margin: 0; padding: 6px; list-style: none; overflow-y: auto;
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-pop);
+  animation: ui-select-in 0.12s var(--ease);
+  scrollbar-width: thin;
+}
+@keyframes ui-select-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
+.ui-select-option {
+  display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 10px; border-radius: 8px;
+  font-size: 14px; cursor: pointer; user-select: none; -webkit-user-select: none;
+}
+.ui-select-option.is-active { background: var(--surface-2); }
+.ui-select-option.is-selected { font-weight: 600; }
+.ui-select-option.has-divider { margin-top: 7px; position: relative; }
+.ui-select-option.has-divider::before { content: ""; position: absolute; left: 4px; right: 4px; top: -4px; border-top: 1px solid var(--border); }
+.ui-select-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-select-hint { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.ui-select-check { flex-shrink: 0; color: var(--accent); visibility: hidden; }
+.ui-select-option.is-selected .ui-select-check { visibility: visible; }
+@media (prefers-reduced-motion: reduce) {
+  .ui-select, .ui-select-list { transition: none; animation: none; }
+}
+@media (max-width: 700px) {
+  .ui-select { font-size: 16px; }
+  .ui-select.is-sm { font-size: 14px; }
+  .ui-select-option { min-height: 42px; font-size: 15px; }
+}
+
+/* ---------- Checklist cards: "Show more" and the folded "✓ N completed" line ---------- */
+.widget-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: 0; padding: 6px 4px; margin-top: 2px;
+  color: var(--accent); font-weight: 600; font-size: 13px; cursor: pointer; border-radius: 6px;
+}
+.widget-toggle:hover { background: var(--surface-2); }
+.widget-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.done-group { margin-top: 4px; border-top: 1px solid var(--border); padding-top: 4px; }
+.done-toggle { color: var(--muted); }
+.done-tick {
+  display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 5px;
+  background: var(--accent); color: var(--accent-ink); font-size: 11px;
+}
+.done-list { animation: list-open 0.15s ease-out; }
+@keyframes list-open { from { opacity: 0; transform: translateY(-4px); } }
+/* The tick pops when something is checked off, so the hand-off is visible. */
+.done-toggle .done-tick.is-bump { animation: tick-bump 0.35s ease-out; }
+@keyframes tick-bump { 40% { transform: scale(1.35); } }
+@media (prefers-reduced-motion: reduce) {
+  .chevron, .done-list, .done-toggle .done-tick.is-bump { transition: none; animation: none; }
+}

@@ -1,0 +1,116 @@
+/* Summon (Pokémon gacha) styles. Uses the app's color tokens; Poké Ball and type colors are fixed on purpose. */
+
+/* Badges */
+.poke-badge { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--surface-2); }
+.poke-badge.is-shiny { background: #fff3c4; color: #7a5a00; }
+.poke-badge.is-legendary { background: #d9a404; color: #1d1d1d; }
+.poke-badge.is-mythical { background: #b04ad8; color: #fff; }
+.poke-badge.is-new { background: var(--accent); color: var(--accent-ink); }
+
+/* ---------- Layout: everything on one screen ---------- */
+.summon-page { display: grid; gap: 14px; max-width: 940px; }
+@media (min-width: 761px) { .page.summon-page { padding-bottom: 24px; } }
+.summon-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.summon-header h1 { margin: 0; }
+.points-balance {
+  display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 14px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border); white-space: nowrap;
+}
+.points-icon { color: #d4a017; font-size: 15px; }
+.points-value { font-size: 17px; font-variant-numeric: tabular-nums; }
+
+.summon-stage {
+  display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 8px 24px; align-items: center;
+  padding: 16px 22px; overflow: hidden;
+  background: radial-gradient(ellipse 45% 60% at 32% 45%, var(--accent-soft), transparent 75%), var(--surface);
+}
+.summon-machine { display: grid; place-items: center; min-width: 0; }
+/* The machine shrinks to fit short screens instead of pushing things below the fold */
+.summon-machine .gacha { width: min(330px, 100%, max(210px, calc((100dvh - 330px) * 0.75))); }
+.summon-side { display: grid; gap: 12px; align-content: center; min-width: 0; }
+
+/* Machine picker: a compact list */
+.machine-picker { display: grid; gap: 4px; }
+.machine-option {
+  display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; align-items: center; gap: 10px;
+  padding: 7px 10px; border-radius: 10px; border: 1px solid transparent; background: none;
+  color: var(--text); font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+  transition: background-color 0.12s, border-color 0.12s;
+}
+.machine-option:hover:not(:disabled) { background: var(--surface-2); }
+.machine-option.is-selected { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 40%, transparent); font-weight: 600; }
+.machine-option:disabled { cursor: default; }
+.machine-option:disabled:not(.is-selected) { opacity: 0.55; }
+.machine-option-ball { width: 24px; height: 24px; }
+.machine-option-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.machine-option-cost { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 500; }
+.machine-option-cost::before { content: "◈ "; color: #d4a017; }
+.machine-option-cost.is-short { color: var(--danger); }
+.machine-odds { margin: 0; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.machine-odds strong { color: var(--text); font-weight: 600; }
+.machine-blurb { flex-basis: 100%; }
+
+/* Result / caption */
+.stage-info { min-height: 76px; display: flex; flex-direction: column; justify-content: center; border-top: 1px solid var(--border); padding-top: 12px; }
+.stage-caption { margin: 0; font-size: 14px; }
+.stage-details { display: grid; gap: 6px; justify-items: start; }
+.stage-details.is-fresh > * { animation: stage-rise 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.stage-details.is-fresh > :nth-child(1) { animation-delay: 0.3s; }
+.stage-details.is-fresh > :nth-child(2) { animation-delay: 0.45s; }
+.stage-details.is-fresh > :nth-child(3) { animation-delay: 0.6s; }
+.stage-name { font-size: 20px; line-height: 1.2; }
+.stage-name .muted { font-size: 14px; font-variant-numeric: tabular-nums; }
+.stage-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.stage-tags .type-chips { justify-content: flex-start; }
+.stage-field-link { font-size: 13px; color: var(--accent); text-decoration: none; }
+.stage-field-link:hover { text-decoration: underline; }
+.summon-btn { width: 100%; min-height: 44px; font-size: 15px; }
+@keyframes stage-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* Recent: one strip */
+.summon-recent { display: grid; gap: 6px; min-width: 0; }
+.summon-recent-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.summon-recent-title { margin: 0; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.summon-recent-stats { font-size: 13px; font-variant-numeric: tabular-nums; }
+.summon-recent-empty { margin: 0; font-size: 14px; }
+.summon-history {
+  list-style: none; margin: 0; padding: 2px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin;
+}
+.summon-history li { flex-shrink: 0; }
+.summon-past {
+  width: 56px; height: 56px; display: grid; place-items: center; padding: 0;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
+  transition: background-color 0.12s, border-color 0.12s, transform 0.12s;
+}
+.summon-past:hover:not(:disabled) { background: var(--surface-2); transform: translateY(-1px); }
+.summon-past:disabled { cursor: default; opacity: 0.6; }
+.summon-past .poke-sprite { width: 52px; height: 52px; }
+.summon-past .poke-sprite.is-missing { font-size: 18px; }
+.summon-past.rarity-legendary { border-color: #d9a404; }
+.summon-past.rarity-mythical { border-color: #b04ad8; }
+.summon-past.is-shiny { background: linear-gradient(160deg, #fff3c466, transparent 65%), var(--surface); }
+
+@media (max-width: 760px) {
+  .summon-page { gap: 10px; }
+  .summon-stage { grid-template-columns: minmax(0, 1fr); padding: 12px; gap: 10px;
+    background: radial-gradient(ellipse 70% 40% at 50% 38%, var(--accent-soft), transparent 75%), var(--surface); }
+  /* Machines on top as one row of chips, then the machine, then the result and button */
+  .summon-side { display: contents; }
+  .machine-picker { order: -2; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+  .machine-option { grid-template-columns: 1fr; justify-items: center; gap: 2px; padding: 6px 2px; font-size: 12px; }
+  .machine-option-ball { width: 22px; height: 22px; }
+  .machine-option-cost { font-size: 11px; }
+  .machine-option-cost::before { content: none; }
+  .machine-odds { order: -1; justify-content: center; text-align: center; }
+  .machine-blurb { display: none; }
+  .summon-machine .gacha { width: min(300px, 100%, max(170px, calc((100dvh - 560px) * 0.75))); }
+  .stage-info { min-height: 64px; border-top: 0; padding-top: 0; align-items: center; text-align: center; }
+  .stage-details { justify-items: center; }
+  .stage-tags { justify-content: center; }
+  .summon-past { width: 48px; height: 48px; }
+  .summon-past .poke-sprite { width: 44px; height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage-details.is-fresh > * { animation: none; }
+  .machine-option, .summon-past { transition: none; }
+}

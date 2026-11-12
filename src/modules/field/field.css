@@ -1,0 +1,174 @@
+/* Field module. The play area uses fixed game colors; the page around it uses the app's tokens. */
+
+.field-stage {
+  position: relative; height: clamp(360px, 64vh, 640px);
+  border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--border); background: #7cc653;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.field-canvas {
+  display: block; width: 100%; height: 100%;
+  touch-action: none; cursor: grab; outline: none;
+  -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.field-canvas.is-dragging { cursor: grabbing !important; }
+.field-canvas:focus-visible { box-shadow: inset 0 0 0 3px var(--accent); }
+.field-hint { font-size: 12px; margin: 8px 2px 0; }
+
+/* Overlays on the play area */
+.field-hud { position: absolute; top: 12px; left: 12px; display: flex; gap: 6px; flex-wrap: wrap; pointer-events: none; }
+.field-pill {
+  background: rgba(255, 255, 255, 0.9); color: #1d2a1d; font-size: 12px; font-weight: 600;
+  padding: 4px 10px; border-radius: 999px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  font-variant-numeric: tabular-nums;
+}
+.field-zoom { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 6px; }
+.field-zoom button {
+  width: 34px; height: 34px; border-radius: 9px; border: 0; cursor: pointer;
+  background: rgba(255, 255, 255, 0.92); color: #1d2a1d; font-size: 18px; font-weight: 600; line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+.field-zoom button:hover { background: #fff; }
+.field-zoom button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.field-empty {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px 24px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  max-width: calc(100% - 32px);
+}
+.field-empty .btn-primary { text-decoration: none; margin-top: 4px; }
+
+.field-notice {
+  position: absolute; top: 56px; left: 50%; transform: translateX(-50%);
+  background: var(--text); color: var(--bg); font-size: 13px; font-weight: 600;
+  padding: 8px 14px; border-radius: 10px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  max-width: calc(100% - 32px); animation: field-rise 0.2s ease-out;
+}
+
+/* Selected Pokémon */
+.field-card {
+  position: absolute; left: 12px; bottom: 12px; width: min(440px, calc(100% - 24px));
+  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 12px 12px 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22); animation: field-rise 0.22s ease-out;
+}
+.field-card-sprite { width: 72px; height: 72px; border-radius: 10px; background: var(--surface-2); }
+.field-card-body { min-width: 0; display: grid; gap: 6px; }
+.field-card-name { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 17px; }
+.field-card-name .muted { font-size: 13px; font-variant-numeric: tabular-nums; }
+.field-card-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.field-card-tags .type-chips { justify-content: flex-start; }
+.field-card-meta { margin: 0; font-size: 12px; }
+.field-card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.field-card-actions .btn-ghost { min-height: 32px; padding: 0 10px; font-size: 13px; }
+.field-card-close {
+  width: 30px; height: 30px; display: grid; place-items: center; flex-shrink: 0;
+  border: 1px solid var(--border); border-radius: 50%; background: var(--surface-2); color: var(--text);
+  font-size: 18px; line-height: 1; cursor: pointer; margin: -2px -2px 0 0; padding: 0;
+}
+.field-card-close:hover { background: var(--border); }
+.field-card-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.field-rename { display: flex; gap: 6px; }
+.field-rename input { flex: 1; min-width: 0; }
+.field-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+.field-badge.is-shiny { background: #fff3c4; color: #7a5a00; }
+.field-badge.is-legendary { background: #d9a404; color: #1d1d1d; }
+.field-badge.is-mythical { background: #b04ad8; color: #fff; }
+
+/* Roster lists */
+.roster-grid {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px;
+}
+.roster-tile {
+  display: flex; flex-direction: column; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden; min-width: 0;
+}
+.roster-tile.rarity-legendary { border-color: #d9a404; }
+.roster-tile.rarity-mythical { border-color: #b04ad8; }
+.roster-tile.is-shiny { background: linear-gradient(160deg, #fff3c455, transparent 60%), var(--surface); }
+.roster-tile.is-active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.roster-main {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 8px;
+  background: none; border: 0; color: var(--text); font: inherit; cursor: pointer; width: 100%;
+}
+.roster-main:disabled { cursor: default; }
+.roster-main:not(:disabled):hover { background: var(--surface-2); }
+.roster-main:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.roster-main .poke-sprite { width: 64px; height: 64px; }
+.roster-main .poke-sprite.is-missing { font-size: 20px; }
+.roster-name { font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roster-action {
+  border: 0; border-top: 1px solid var(--border); background: var(--surface-2); color: var(--accent);
+  font: inherit; font-size: 12px; font-weight: 600; padding: 6px 4px; cursor: pointer;
+}
+.roster-action:hover:not(:disabled) { background: var(--accent-soft); }
+.roster-action:disabled { color: var(--muted); cursor: default; }
+
+@keyframes field-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.field-notice { animation-name: field-notice-in; }
+@keyframes field-notice-in { from { opacity: 0; transform: translate(-50%, -6px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+@media (max-width: 700px) {
+  .field-stage { height: clamp(320px, 58vh, 520px); margin: 0 -4px; }
+  .field-card { left: 8px; right: 8px; bottom: 8px; width: auto; grid-template-columns: auto 1fr auto; }
+  .field-card-sprite { width: 56px; height: 56px; }
+  .field-hint { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field-card, .field-notice { animation: none; }
+}
+
+/* Levels */
+.poke-level { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; font-size: 12px; }
+.poke-level.is-compact { grid-template-columns: auto 1fr; gap: 6px; font-size: 11px; }
+.poke-level-num { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.poke-level-bar { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; min-width: 40px; }
+.poke-level-fill { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.35s ease; }
+.poke-level-text { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Team */
+.team-badge { font-size: 11px; font-weight: 700; color: #7a5a00; background: #ffe79a; padding: 2px 8px; border-radius: 999px; }
+.field-card-actions .btn-ghost.is-team { color: #8a6400; }
+.team-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.team-slot {
+  width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 8px 10px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font: inherit; cursor: pointer;
+  min-width: 0;
+}
+.team-slot:hover { background: var(--surface-2); }
+.team-slot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.team-slot.is-active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.team-slot.is-shiny { background: linear-gradient(160deg, #fff3c455, transparent 60%), var(--surface); }
+.team-slot .poke-sprite { width: 64px; height: 64px; }
+.team-slot-body { display: grid; gap: 4px; width: 100%; min-width: 0; }
+.team-slot-name { font-size: 13px; font-weight: 600; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team-slot.is-empty {
+  justify-content: center; min-height: 118px; cursor: default; border-style: dashed; background: transparent; font-size: 12px;
+}
+.team-slot-plus { font-size: 22px; color: var(--muted); line-height: 1; }
+.team-hint { font-size: 13px; margin: 8px 0 0; }
+
+.roster-main { position: relative; }
+.roster-team { position: absolute; top: 4px; left: 6px; color: #d4a017; font-size: 13px; }
+.roster-level { position: absolute; top: 5px; right: 6px; font-size: 10.5px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 700px) {
+  .team-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .poke-level-fill { transition: none; }
+}
+.field-card-actions .btn-ghost.is-summary { font-weight: 600; }
+
+/* Header with the battle button */
+.field-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.field-battle-btn { flex-shrink: 0; margin-top: 6px; }
+@media (max-width: 700px) {
+  .field-header { flex-direction: column; gap: 10px; }
+  .field-battle-btn { margin-top: 0; }
+}

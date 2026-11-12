@@ -1,0 +1,94 @@
+/* Pokémon summary (src/pokemon/summary). Uses the app's color tokens. */
+
+.psum { display: grid; gap: 14px; }
+.psum h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 8px; }
+
+.psum-head { display: flex; gap: 14px; align-items: center; padding-right: 36px; }
+.psum-portrait {
+  width: 104px; height: 104px; flex-shrink: 0; border-radius: 16px; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 60%, var(--surface), var(--surface-2));
+  border: 1px solid var(--border);
+}
+.psum-portrait.is-shiny { background: radial-gradient(circle at 50% 60%, #fff8d8, #f3e3a0); }
+.psum-sprite { width: 96px; height: 96px; }
+.psum-title { min-width: 0; display: grid; gap: 4px; }
+.psum-name { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 22px; }
+.psum-gender { font-size: 18px; font-weight: 700; }
+.psum-gender.is-male { color: #3a7bd5; }
+.psum-gender.is-female { color: #e0517d; }
+.psum-level { font-size: 15px; font-weight: 700; color: var(--accent); }
+.psum-sub { font-size: 13px; }
+.psum-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.psum-tags .type-chips { justify-content: flex-start; }
+.psum-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+.psum-badge.is-shiny { background: #fff3c4; color: #7a5a00; }
+.psum-badge.is-legendary { background: #d9a404; color: #1d1d1d; }
+.psum-badge.is-mythical { background: #b04ad8; color: #fff; }
+
+.psum-exp { display: grid; gap: 6px; }
+.psum-exp-head { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.psum-exp-foot { font-size: 12px; }
+.psum-bar { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.psum-bar > span { display: block; height: 100%; background: #3a8ee6; border-radius: 4px; transition: width 0.35s ease; }
+.psum-loading, .psum-error { margin: 0; font-size: 13px; }
+
+.psum-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 12px; }
+.psum-card { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; min-width: 0; }
+
+/* Stats table */
+.psum-stats { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.psum-stats th, .psum-stats td { padding: 4px 4px; text-align: left; font-weight: 500; }
+.psum-stats thead th { font-size: 11px; font-weight: 600; }
+.psum-stats .num { text-align: right; }
+.psum-stats .strong { font-weight: 700; }
+.psum-stats tbody th { white-space: nowrap; }
+.psum-stats tr.is-up th { color: #d6453d; }
+.psum-stats tr.is-down th { color: #3a7bd5; }
+.psum-stats tfoot th, .psum-stats tfoot td { border-top: 1px solid var(--border); padding-top: 6px; }
+.psum-stats .bar-col { width: 40%; }
+.psum-statbar { display: block; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.psum-statbar > span { display: block; height: 100%; border-radius: 3px; background: var(--muted); }
+.psum-statbar > .is-low { background: #e8774a; }
+.psum-statbar > .is-ok { background: #e5c13a; }
+.psum-statbar > .is-good { background: #7cc653; }
+.psum-statbar > .is-great { background: #3fb8a9; }
+
+/* About */
+.psum-facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; font-size: 14px; }
+.psum-facts dt { color: var(--muted); }
+.psum-facts dd { margin: 0; }
+.psum-flavor { margin: 10px 0 0; font-size: 13px; color: var(--muted); font-style: italic; line-height: 1.45; }
+
+/* Moves */
+.psum-version { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.psum-moves { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.psum-move { border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; display: grid; gap: 4px; min-width: 0; }
+.psum-move-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.psum-move-head strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.psum-move-head .type-chip { font-size: 10px; padding: 2px 8px; }
+.psum-move-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; font-variant-numeric: tabular-nums; align-items: center; }
+.psum-cat { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 6px; }
+.psum-cat.is-physical { background: #f6d6c8; color: #8a2f12; }
+.psum-cat.is-special { background: #d3e2fb; color: #1d4b99; }
+.psum-cat.is-status { background: var(--surface-2); color: var(--muted); }
+.psum-move-effect { margin: 0; font-size: 12px; line-height: 1.35; }
+.psum-next { margin: 10px 0 0; font-size: 13px; }
+
+/* Matchups */
+.psum-matchups { display: grid; gap: 8px; margin: 0; }
+.psum-matchups > div { display: grid; grid-template-columns: 80px 1fr; gap: 8px; align-items: start; }
+.psum-matchups dt { font-size: 13px; color: var(--muted); padding-top: 2px; }
+.psum-matchups dd { margin: 0; display: flex; gap: 6px; flex-wrap: wrap; }
+.psum-matchup { display: inline-flex; align-items: center; gap: 3px; }
+.psum-matchup .type-chip { font-size: 10px; padding: 2px 8px; }
+.psum-mult { font-size: 11px; font-weight: 700; }
+
+@media (max-width: 640px) {
+  .psum-grid, .psum-moves { grid-template-columns: 1fr; }
+  .psum-portrait { width: 84px; height: 84px; }
+  .psum-sprite { width: 80px; height: 80px; }
+  .psum-name { font-size: 19px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .psum-bar > span { transition: none; }
+}

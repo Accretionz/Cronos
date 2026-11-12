@@ -1,10 +1,14 @@
 import { useCore, useModules } from "../core";
-import { resetNavOrder, useNavOrder } from "./navOrder";
+import { hasIcon, Icon } from "./icons";
+import { AccountSummary } from "./AccountSummary";
+import { DataSettings } from "./DataSettings";
+import { useNavOrder, useNavOrderActions } from "./navOrder";
 
 export function Settings() {
   const { registry } = useCore();
   const enabled = useModules(); // also re-renders when modules are switched on or off
   const navOrder = useNavOrder();
+  const { resetNavOrder } = useNavOrderActions();
 
   return (
     <div className="page">
@@ -18,7 +22,7 @@ export function Settings() {
           return (
             <li key={m.id} className="card module-row">
               <span className="module-icon" aria-hidden>
-                {m.icon ?? "•"}
+                {hasIcon(m.id) ? <Icon id={m.id} size={22} /> : (m.icon ?? "•")}
               </span>
               <div className="module-text">
                 <strong>{m.name}</strong>
@@ -53,12 +57,28 @@ export function Settings() {
           );
         })}
 
+      <section className="section" aria-labelledby="settings-cloud">
+        <h2 className="section-title" id="settings-cloud">
+          Account
+        </h2>
+        <AccountSummary />
+      </section>
+
+      <section className="section" aria-labelledby="settings-data">
+        <h2 className="section-title" id="settings-data">
+          Your data
+        </h2>
+        <DataSettings />
+      </section>
+
       <section className="section">
         <h2 className="section-title">Sidebar order</h2>
         <div className="card settings-row">
           <p className="muted">
-            Drag items in the sidebar to reorder them (Today always stays first). On a phone, press and hold an
-            item in the bottom bar, then drag. With a keyboard, focus an item and press Alt + ↑ / ↓. Press Esc
+            Drag items in the sidebar to reorder them (Today always stays first). The order is saved to your account,
+            so it's the same on every device. On a phone, press and hold an
+            item in the bottom bar, then drag. On a phone the bar shows Today and the first three pages; the rest are
+            under More. With a keyboard, focus an item and press Alt + ↑ / ↓. Press Esc
             while dragging to cancel.
           </p>
           <button className="btn-ghost" onClick={resetNavOrder} disabled={navOrder.length === 0}>

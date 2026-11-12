@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { formatDay, todayKey, useCore, dayOf, type Item } from "../../core";
+import { dayOf, formatDay, useCore, useToday, type Item } from "../../core";
+import { Select } from "../../ui";
 import { TASK, type Priority, type Task, type TaskData } from "./model";
 
 export function AddTaskForm({ defaultDate = "", compact = false }: { defaultDate?: string; compact?: boolean }) {
@@ -32,11 +33,16 @@ export function AddTaskForm({ defaultDate = "", compact = false }: { defaultDate
       {!compact && (
         <>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Date" />
-          <select value={priority} onChange={(e) => setPriority(e.target.value as Priority)} aria-label="Priority">
-            <option value="low">Low</option>
-            <option value="normal">Normal</option>
-            <option value="high">High</option>
-          </select>
+          <Select<Priority>
+            value={priority}
+            onChange={setPriority}
+            label="Priority"
+            options={[
+              { value: "low", label: "Low priority", color: "var(--muted)" },
+              { value: "normal", label: "Normal priority", color: "var(--accent)" },
+              { value: "high", label: "High priority", color: "var(--danger)" },
+            ]}
+          />
         </>
       )}
       <button type="submit" className="btn-primary" disabled={!title.trim()}>
@@ -51,7 +57,8 @@ export function TaskRow({ task }: { task: Item }) {
   const t = task as Task;
   const done = t.status === "done";
   const day = t.scheduledFor ? dayOf(t.scheduledFor) : null;
-  const overdue = !done && day !== null && day < todayKey();
+  const today = useToday();
+  const overdue = !done && day !== null && day < today;
   const priority = t.data.priority ?? "normal";
 
   return (

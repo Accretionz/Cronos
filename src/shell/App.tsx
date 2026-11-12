@@ -1,6 +1,8 @@
 import { useModules } from "../core";
+import { Account } from "./Account";
 import { Dashboard } from "./Dashboard";
 import { Nav } from "./Nav";
+import { ErrorToasts, NotifyToasts } from "./Notices";
 import { href, parseRoute, useHash } from "./router";
 import { Settings } from "./Settings";
 
@@ -12,6 +14,8 @@ export function App() {
   let content;
   if (route.name === "settings") {
     content = <Settings />;
+  } else if (route.name === "account") {
+    content = <Account />;
   } else if (route.name === "module") {
     const mod = withPages.find((m) => m.id === route.id);
     const Page = mod?.page;
@@ -23,7 +27,11 @@ export function App() {
   return (
     <div className="app">
       <Nav route={route} />
-      <main className="main">{content}</main>
+      <main className="main">
+        {content}
+      </main>
+      <ErrorToasts />
+      <NotifyToasts />
       {modules.map((m) => {
         const Overlay = m.overlay;
         return Overlay ? <Overlay key={m.id} /> : null;

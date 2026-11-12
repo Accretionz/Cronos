@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { addDays, dayKey, formatDay, todayKey } from "../../core";
+import { addDays, dayKey, formatDay, useToday } from "../../core";
 import { useAgenda, type AgendaEntry } from "./agenda";
 import { AgendaList } from "./AgendaList";
 import { EventForm } from "./EventForm";
@@ -21,7 +21,7 @@ function gridRange(year: number, month: number) {
 type Editing = { mode: "new" } | { mode: "edit"; event: CalendarEvent } | null;
 
 export function CalendarPage() {
-  const today = todayKey();
+  const today = useToday();
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     return { year: d.getFullYear(), month: d.getMonth() };

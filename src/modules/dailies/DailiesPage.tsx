@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { todayKey, useItems } from "../../core";
+import { useItems, useToday } from "../../core";
 import { DailyForm, DailyRow, TodaySummary } from "./components";
-import { DAILY, PERFECT_DAY_XP, XP_BY_DIFFICULTY, isDueOn, type Daily } from "./model";
+import { DAILY, PERFECT_DAY_POINTS, PERFECT_DAY_XP, POINTS_BY_DIFFICULTY, XP_BY_DIFFICULTY, isDueOn, type Daily } from "./model";
 import "./dailies.css";
 
 type Editing = { mode: "new" } | { mode: "edit"; daily: Daily } | null;
 
 export function DailiesPage() {
-  const today = todayKey();
+  const today = useToday();
   const dailies = useItems({ type: DAILY, status: "open" }) as Daily[];
   const [editing, setEditing] = useState<Editing>(null);
 
@@ -20,9 +20,10 @@ export function DailiesPage() {
         <div>
           <h1>Dailies</h1>
           <p className="muted">
-            Routines that repeat. Each one earns XP when you complete it: easy {XP_BY_DIFFICULTY.easy}, medium{" "}
-            {XP_BY_DIFFICULTY.medium}, hard {XP_BY_DIFFICULTY.hard}. Finish them all for a +{PERFECT_DAY_XP} XP
-            perfect-day bonus.
+            Routines that repeat. Each one earns XP and Gacha Points (for summons) when you complete it: easy{" "}
+            {XP_BY_DIFFICULTY.easy} XP · {POINTS_BY_DIFFICULTY.easy} GP, medium {XP_BY_DIFFICULTY.medium} XP ·{" "}
+            {POINTS_BY_DIFFICULTY.medium} GP, hard {XP_BY_DIFFICULTY.hard} XP · {POINTS_BY_DIFFICULTY.hard} GP. Finish
+            them all for a perfect-day bonus of +{PERFECT_DAY_XP} XP and +{PERFECT_DAY_POINTS} GP.
           </p>
         </div>
         {!editing && (

@@ -119,9 +119,7 @@ function CategoryColorRow({
         >
           <span className="color-btn-swatch" style={{ background: cssColor(choice) }} aria-hidden />
           {swatchName}
-          <span className={`chevron${expanded ? " is-open" : ""}`} aria-hidden>
-            ▾
-          </span>
+          <span className={`chevron${expanded ? " is-open" : ""}`} aria-hidden />
         </button>
       </div>
       {expanded && <SwatchPicker id={panelId} category={category} choice={choice} />}

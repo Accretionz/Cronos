@@ -8,3 +8,6 @@ export * from "./registry";
 export * from "./app";
 export * from "./hooks";
 export * from "./links";
+export * from "./backup";
+export * from "./account";
+export * from "./legacy";

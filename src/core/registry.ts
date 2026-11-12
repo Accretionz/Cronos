@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import type { EventBus } from "./bus";
 import type { ItemStore } from "./store";
+import type { Item } from "./types";
 
 /** What a module receives when it starts up. */
 export interface ModuleContext {
@@ -12,8 +13,19 @@ export interface ModuleWidget {
   id: string;
   title: string;
   component: ComponentType;
-  /** Lower numbers appear first on the dashboard. Default 100. */
+  /** Lower numbers appear first within their area. Default 100. */
   order?: number;
+  /**
+   * Where it goes on the Today page:
+   * - "stat": a small tile in the row of numbers at the top (render a `StatTile` from ui; the
+   *   dashboard adds no card or title around it)
+   * - "main": the wide column, for things you act on (dailies, tasks)
+   * - "side": the narrow column, for things you glance at (schedule, budget)
+   * Default "main".
+   */
+  slot?: "stat" | "main" | "side";
+  /** A link shown in the card's header, e.g. { label: "Open calendar", href: moduleHref("calendar") }. */
+  link?: { label: string; href: string };
 }
 
 /**
@@ -33,6 +45,12 @@ export interface AppModule {
   page?: ComponentType;
   /** Tiles shown on the Today dashboard. */
   widgets?: ModuleWidget[];
+  /**
+   * Bring an older stored item of this module's `itemTypes` up to date. Runs at startup
+   * and after restoring a backup. Must be safe to run repeatedly (return the item
+   * unchanged when it's already current). Return null to leave it alone.
+   */
+  upgradeItem?(item: Item): Item | null;
   /** The module's own section on the Settings page (shown while the module is on). */
   settings?: ComponentType;
   /** Always-mounted UI layered over every page, e.g. toasts or celebrations. */
@@ -85,6 +103,19 @@ export class ModuleRegistry {
   start(ctx: ModuleContext): void {
     this.ctx = ctx;
     this.modules.filter((m) => this.isEnabled(m.id)).forEach((m) => this.activate(m));
+  }
+
+  /** Switch every module off (run their cleanups). The enabled/disabled settings are kept. */
+  stop(): void {
+    this.cleanups.forEach((cleanup) => {
+      try {
+        cleanup();
+      } catch (err) {
+        console.error("[registry] cleanup failed", err);
+      }
+    });
+    this.cleanups.clear();
+    this.ctx = null;
   }
 
   all(): AppModule[] {

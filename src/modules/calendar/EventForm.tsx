@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { dayOf, useCore } from "../../core";
+import { Select } from "../../ui";
 import {
   EVENT,
   REPEAT_LABELS,
@@ -82,13 +83,7 @@ export function EventForm({ event, defaultDay, onDone }: Props) {
       {endBeforeStart && <p className="hint hint-error">End time must be after the start.</p>}
       <label className="field">
         <span>Repeat</span>
-        <select value={repeat} onChange={(e) => setRepeat(e.target.value as Repeat)}>
-          {(Object.keys(REPEAT_LABELS) as Repeat[]).map((r) => (
-            <option key={r} value={r}>
-              {REPEAT_LABELS[r]}
-            </option>
-          ))}
-        </select>
+        <Select<Repeat> value={repeat} onChange={setRepeat} options={(Object.keys(REPEAT_LABELS) as Repeat[]).map((r) => ({ value: r, label: REPEAT_LABELS[r] }))} />
       </label>
       <label className="field">
         <span>Location</span>

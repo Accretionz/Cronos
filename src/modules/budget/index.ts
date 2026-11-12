@@ -1,8 +1,9 @@
-import { dayOf, type AppModule, type Item } from "../../core";
+import { dayOf, moduleHref, type AppModule, type Item } from "../../core";
 import { BudgetPage } from "./BudgetPage";
 import { BudgetSettings } from "./BudgetSettings";
 import { BUDGET_SETTINGS, assignMissingColors } from "./colors";
 import { BudgetWidget } from "./BudgetWidget";
+import { watchIncome } from "./rewards";
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
@@ -18,11 +19,11 @@ export const budgetModule: AppModule = {
   id: "budget",
   name: "Budget",
   icon: "$",
-  description: "Track income and spending, with monthly limits per category.",
+  description: "Track income and spending, with monthly limits per category. Half of income becomes Gacha Points.",
   itemTypes: [TXN, LIMIT, BUDGET_SETTINGS],
   page: BudgetPage,
   settings: BudgetSettings,
-  widgets: [{ id: "budget", title: "Budget this month", component: BudgetWidget, order: 20 }],
+  widgets: [{ id: "budget", title: "Budget this month", component: BudgetWidget, order: 20, slot: "side", link: { label: "Budget", href: moduleHref("budget") } }],
 
   init({ bus, store }) {
     // Announce when an expense (new or edited) tips a category over its limit.
@@ -71,9 +72,12 @@ export const budgetModule: AppModule = {
       check(item, previous);
       onChange(item);
     });
+    // Half of every income becomes Gacha Points (for summons).
+    const stopIncome = watchIncome(bus, store);
     return () => {
       offCreated();
       offUpdated();
+      stopIncome();
     };
   },
 };

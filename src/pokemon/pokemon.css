@@ -1,0 +1,17 @@
+/* Shared Pokémon UI: sprites and type chips. Used by every Pokémon feature. */
+
+/* Sprites */
+.poke-sprite { display: block; width: 96px; height: 96px; object-fit: contain; image-rendering: pixelated; }
+.poke-sprite.is-artwork { image-rendering: auto; }
+.poke-sprite.is-missing {
+  display: grid; place-items: center; color: var(--muted); font-weight: 700; font-size: 32px;
+  background: var(--surface-2); border-radius: 50%;
+}
+
+/* Type chips and badges */
+.type-chips { display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.type-chip {
+  color: #fff; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 3px 10px; border-radius: 999px; text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+}
+.type-chip.is-light { color: #1d1d1d; text-shadow: none; }

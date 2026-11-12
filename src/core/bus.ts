@@ -21,6 +21,8 @@ export interface EventMap {
   /** Fired once per calendar day (on launch, at midnight, or when the app is reopened). */
   "day.started": { date: string; previousDate: string | null };
   "app.ready": Record<string, never>;
+  /** Something went wrong that the user should know about (e.g. a save failed). */
+  "app.error": { message: string };
 
   /**
    * Any module can award XP. The Level & XP module (if switched on) records it.
@@ -30,6 +32,20 @@ export interface EventMap {
   "xp.award": { key: string; amount: number; reason: string; source: string };
   /** Undo an earlier award, e.g. when a completed item is un-checked. */
   "xp.revoke": { key: string };
+
+  /**
+   * Any module can award Gacha Points (spent on summons). Same rules as XP: `key` is
+   * unique per achievement, and "points.revoke" takes it back. Recorded by the wallet
+   * (src/pokemon/wallet.ts), started by the Summon module.
+   */
+  "points.award": { key: string; amount: number; reason: string; source: string };
+  "points.revoke": { key: string };
+
+  /**
+   * A short message for the user (e.g. "+25 XP", "Pikachu grew to Lv. 7!"). The app shows
+   * these in one stack, so modules never draw their own pop-ups. `big` is for celebrations.
+   */
+  "app.notify": { text: string; big?: boolean; icon?: string };
 }
 
 export type EventName = keyof EventMap;

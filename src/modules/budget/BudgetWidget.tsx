@@ -1,12 +1,12 @@
-import { moduleHref } from "../../core";
+import { useToday } from "../../core";
 import { Meter } from "./components";
 import { useMonthBudget } from "./hooks";
-import { currentMonth, formatMoney } from "./model";
+import { formatMoney, monthOf } from "./model";
 import "./budget.css";
 
 /** Dashboard tile: this month's spending against the budget, and any categories over their limit. */
 export function BudgetWidget() {
-  const { summary } = useMonthBudget(currentMonth());
+  const { summary } = useMonthBudget(monthOf(useToday()));
   const over = summary.categories.filter((c) => c.limitCents !== undefined && c.spentCents > c.limitCents);
 
   return (
@@ -36,9 +36,6 @@ export function BudgetWidget() {
           ))}
         </ul>
       )}
-      <a className="widget-link" href={moduleHref("budget")}>
-        Open budget →
-      </a>
     </div>
   );
 }

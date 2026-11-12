@@ -7,8 +7,11 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
-import { useModules } from "../core";
-import { applyOrder, moveId, setNavOrder, useNavOrder } from "./navOrder";
+import { createPortal } from "react-dom";
+import { useAccountInfo, useModules } from "../core";
+import { Avatar } from "./Avatar";
+import { applyOrder, moveId, useNavOrder, useNavOrderActions } from "./navOrder";
+import { BrandMark, hasIcon, Icon } from "./icons";
 import { href, type Route } from "./router";
 
 interface NavItem {
@@ -28,6 +31,8 @@ const TOUCH_SLOP_PX = 8;
 const SLIDE_MS = 180;
 const DROP_MS = 200;
 const LIFT_SCALE = 1.04;
+/** Phones: modules shown in the bottom bar after Today; the rest are under "More". */
+export const PHONE_SLOTS = 3;
 
 interface Gesture {
   id: string;
@@ -54,6 +59,7 @@ const nextFrame = (fn: () => void) => requestAnimationFrame(() => requestAnimati
 export function Nav({ route }: { route: Route }) {
   const modules = useModules();
   const savedOrder = useNavOrder();
+  const { setNavOrder } = useNavOrderActions();
 
   // Today is pinned first; only module pages are reorderable.
   const items = useMemo<NavItem[]>(() => {
@@ -80,6 +86,19 @@ export function Nav({ route }: { route: Route }) {
 
   const shown = preview ? preview.order.map((id) => items.find((i) => i.id === id)!).filter(Boolean) : items;
   const shownKey = shown.map((i) => i.id).join();
+
+  // Phones: the "More" panel with everything that doesn't fit in the bottom bar.
+  const [moreOpen, setMoreOpen] = useState(false);
+  const overflow = items.slice(PHONE_SLOTS);
+  const overflowActive = overflow.some((i) => route.name === "module" && route.id === i.id) || route.name === "settings" || route.name === "account";
+  const { account } = useAccountInfo();
+  useEffect(() => setMoreOpen(false), [route.name, route.name === "module" ? route.id : ""]);
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onKey = (ev: globalThis.KeyboardEvent) => ev.key === "Escape" && setMoreOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [moreOpen]);
 
   const isActive = (id: string) =>
     (id === "today" && route.name === "today") || (route.name === "module" && route.id === id);
@@ -313,19 +332,22 @@ export function Nav({ route }: { route: Route }) {
       onPointerUp={() => end(true)}
       onPointerCancel={() => end(false)}
     >
-      <div className="brand">Cronos</div>
+      <div className="brand">
+        <BrandMark />
+        <span>Cronos</span>
+      </div>
       <a
         className={`nav-link is-pinned${isActive("today") ? " is-active" : ""}`}
         href={href.today}
         aria-current={isActive("today") ? "page" : undefined}
         draggable={false}
       >
-        <span aria-hidden>☀</span> Today
+        <span className="nav-icon" aria-hidden><Icon id="today" /></span> <span className="nav-label">Today</span>
       </a>
 
       <div ref={slotRef} className={`nav-slot${preview ? " is-visible" : ""}`} aria-hidden />
 
-      {shown.map((item) => (
+      {shown.map((item, index) => (
         <a
           key={item.id}
           ref={(el) => {
@@ -339,6 +361,7 @@ export function Nav({ route }: { route: Route }) {
             isActive(item.id) ? "is-active" : "",
             dragging === item.id ? "is-dragging" : "",
             dropped === item.id && dragging !== item.id ? "is-dropped" : "",
+            index >= PHONE_SLOTS ? "is-overflow" : "",
           ]
             .filter(Boolean)
             .join(" ")}
@@ -352,7 +375,7 @@ export function Nav({ route }: { route: Route }) {
           onClick={(e) => suppressClick.current && e.preventDefault()}
           onContextMenu={(e) => gesture.current && e.preventDefault()}
         >
-          <span aria-hidden>{item.icon}</span> {item.label}
+          <span className="nav-icon" aria-hidden>{hasIcon(item.id) ? <Icon id={item.id} /> : item.icon}</span> <span className="nav-label">{item.label}</span>
           <span className="nav-grip" aria-hidden>
             ⠿
           </span>
@@ -361,13 +384,58 @@ export function Nav({ route }: { route: Route }) {
 
       <div className="nav-spacer" />
       <a
-        className={`nav-link${route.name === "settings" ? " is-active" : ""}`}
+        className={`nav-account is-overflow${route.name === "account" ? " is-active" : ""}`}
+        href={href.account}
+        aria-current={route.name === "account" ? "page" : undefined}
+        draggable={false}
+      >
+        <Avatar account={account} size={34} />
+        <span className="nav-account-text">
+          <span className="nav-account-name">{account ? account.name || account.email : "Account"}</span>
+          <span className="nav-account-sub">Account</span>
+        </span>
+      </a>
+      <a
+        className={`nav-link is-overflow${route.name === "settings" ? " is-active" : ""}`}
         href={href.settings}
         aria-current={route.name === "settings" ? "page" : undefined}
         draggable={false}
       >
-        <span aria-hidden>⚙</span> Settings
+        <span className="nav-icon" aria-hidden><Icon id="settings" /></span> <span className="nav-label">Settings</span>
       </a>
+      <button
+        type="button"
+        className={`nav-link nav-more${overflowActive ? " is-active" : ""}`}
+        aria-expanded={moreOpen}
+        aria-controls="nav-more-sheet"
+        onClick={() => setMoreOpen((o) => !o)}
+      >
+        <span className="nav-icon" aria-hidden><Icon id="more" /></span> <span className="nav-label">More</span>
+      </button>
+      {moreOpen &&
+        createPortal(
+        <div className="nav-sheet-backdrop" onClick={() => setMoreOpen(false)}>
+          <div className="nav-sheet" id="nav-more-sheet" role="dialog" aria-label="More pages" onClick={(e) => e.stopPropagation()}>
+            <a className={`nav-sheet-account${route.name === "account" ? " is-active" : ""}`} href={href.account} aria-current={route.name === "account" ? "page" : undefined}>
+              <Avatar account={account} size={38} />
+              <span className="nav-account-text">
+                <span className="nav-account-name">{account ? account.name || account.email : "Account"}</span>
+                <span className="nav-account-sub">Manage account</span>
+              </span>
+            </a>
+            {[...overflow, { id: "settings", label: "Settings", icon: "⚙", href: href.settings }].map((item) => {
+              const active = item.id === "settings" ? route.name === "settings" : isActive(item.id);
+              return (
+                <a key={item.id} className={`nav-sheet-link${active ? " is-active" : ""}`} href={item.href} aria-current={active ? "page" : undefined}>
+                  <span className="nav-icon" aria-hidden>{hasIcon(item.id) ? <Icon id={item.id} /> : item.icon}</span>
+                  {item.label}
+                </a>
+              );
+            })}
+            <p className="nav-sheet-hint">The first three pages in your sidebar order sit in the bar. Change the order by dragging pages in the sidebar on a computer.</p>
+          </div>
+        </div>
+      , document.body)}
       <span className="visually-hidden" role="status" aria-live="polite">
         {announcement}
       </span>

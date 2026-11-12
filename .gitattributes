@@ -1,0 +1,9 @@
+# Store text files with LF line endings in the repository and check them out as LF
+# on every OS, so diffs don't fill up with line-ending changes between Windows and Mac/Linux.
+* text=auto eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary

@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { todayKey, useItems } from "../../core";
+import { useItems, useToday } from "../../core";
 import { AddTaskForm, TaskList } from "./components";
 import { TASK } from "./model";
 
 export function TasksPage() {
-  const today = todayKey();
+  const today = useToday();
   const [showDone, setShowDone] = useState(false);
 
   const overdue = useItems({ type: TASK, status: "open", before: today });

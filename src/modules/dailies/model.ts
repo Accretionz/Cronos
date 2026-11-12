@@ -10,6 +10,10 @@ export const XP_BY_DIFFICULTY: Record<Difficulty, number> = { easy: 10, medium: 
 /** Bonus for finishing every daily scheduled for a day. */
 export const PERFECT_DAY_XP = 25;
 
+/** Gacha Points earned per completion (spent on summons). */
+export const POINTS_BY_DIFFICULTY: Record<Difficulty, number> = { easy: 10, medium: 20, hard: 40 };
+export const PERFECT_DAY_POINTS = 30;
+
 export const DIFFICULTY_LABELS: Record<Difficulty, string> = { easy: "Easy", medium: "Medium", hard: "Hard" };
 
 export type DailyData = {

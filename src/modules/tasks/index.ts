@@ -1,4 +1,4 @@
-import type { AppModule } from "../../core";
+import { moduleHref, type AppModule } from "../../core";
 import { TASK } from "./model";
 import { TasksPage } from "./TasksPage";
 import { TodayTasksWidget } from "./TodayWidget";
@@ -10,5 +10,5 @@ export const tasksModule: AppModule = {
   description: "To-dos with dates and priorities.",
   itemTypes: [TASK],
   page: TasksPage,
-  widgets: [{ id: "today-tasks", title: "Today's tasks", component: TodayTasksWidget, order: 10 }],
+  widgets: [{ id: "today-tasks", title: "Today's tasks", component: TodayTasksWidget, order: 10, slot: "main", link: { label: "All tasks", href: moduleHref("tasks") } }],
 };

@@ -1,0 +1,170 @@
+/*
+ * Capsule machine animation. The scene is one SVG (viewBox 360 × 480); CSS transforms on
+ * SVG groups use its units, so "translate(180px, 212px)" means the point (180, 212).
+ * Each phase of the summon is a class on .gacha (is-crank, is-drop, ...). Durations come
+ * from TIMING in GachaMachine.tsx as CSS variables.
+ */
+
+.gacha {
+  position: relative; width: min(360px, 100%); aspect-ratio: 360 / 480; margin: 0 auto;
+  cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.gacha-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.gacha-svg * { transform-box: view-box; transform-origin: 0 0; }
+
+/* Machine fades back once the ball heads toward you */
+.gm-machine, .gm-front { transition: opacity 0.55s ease; }
+.is-dimmed .gm-machine, .is-dimmed .gm-front { opacity: 0.13; }
+
+/* Idle: an inviting little bob of the crank */
+.is-idle .gm-crank { animation: gm-crank-hint 3.2s ease-in-out infinite; }
+
+/* 1. Crank turns, capsules rattle, the machine rumbles */
+.is-crank .gm-crank { animation: gm-crank 0.85s cubic-bezier(0.5, 0, 0.4, 1) infinite; }
+.is-crank .gm-capsule { animation: gm-jiggle 0.3s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -41ms); }
+.is-crank .gm-machine { animation: gm-rumble 0.17s linear infinite; }
+
+/* 2. The ball drops out of the chute */
+.gm-ball { transform: translate(180px, 392px); }
+.is-drop .gm-ball { animation: gm-drop var(--t-drop) both; }
+.is-drop .gm-ball-spin { animation: gm-drop-spin var(--t-drop) ease-out both; }
+.is-drop .gm-flap { animation: gm-flap var(--t-drop) ease-out both; }
+
+/* 3. It rolls up to the front */
+.is-approach .gm-ball { animation: gm-approach var(--t-approach) cubic-bezier(0.35, 0, 0.2, 1) both; }
+.is-approach .gm-ball-spin { animation: gm-roll var(--t-approach) cubic-bezier(0.3, 0, 0.3, 1) both; }
+
+/* 4. Wobble, wobble... */
+.is-wobble .gm-ball, .is-open .gm-ball { transform: translate(180px, 212px) scale(3.3); }
+.is-wobble .gm-ball-spin { transform-origin: 0 22px; animation: gm-wobble var(--t-wobble) ease-in-out both; }
+.ball-glow { opacity: 0; }
+.gm-ball .ball-glow { fill: var(--ray); }
+.is-wobble .gm-ball .ball-glow { animation: gm-glow 0.5s ease-in-out infinite alternate; }
+
+.gm-aura { opacity: 0; transform: scale(0.6); transition: opacity 0.45s ease, transform 0.6s ease; }
+.is-wobble .gm-aura { animation: gm-aura 0.75s ease-in-out infinite alternate; }
+.is-open .gm-aura { opacity: 1; transform: scale(1.6); }
+.is-reveal .gm-aura { opacity: 0.6; transform: scale(1.15); }
+.tone-common.is-wobble .gm-aura { animation-name: gm-aura-soft; }
+
+.gm-sparkle { animation: gm-twinkle 0.8s ease-in-out infinite alternate both; }
+
+.gm-ball-shadow { opacity: 0; transform: scale(0.4); transform-origin: 180px 296px; transition: opacity 0.4s ease, transform 0.4s ease; }
+.is-wobble .gm-ball-shadow { opacity: 0.1; transform: none; }
+
+/* 5. It bursts open */
+.is-open .ball-lid { animation: gm-lid var(--t-open) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+.is-open .ball-bottom { animation: gm-bottom var(--t-open) ease-in both; }
+.is-open .ball-mid { animation: gm-fade-out calc(var(--t-open) * 0.35) ease-in both; }
+.gm-flash { animation: gm-flash var(--t-open) ease-out both; }
+.gm-particle { animation: gm-burst 1.1s cubic-bezier(0.12, 0.8, 0.3, 1) both; }
+
+.gm-rays { opacity: 0; transition: opacity 0.6s ease; }
+.is-open .gm-rays, .is-reveal .gm-rays { opacity: 0.75; animation: gm-spin 30s linear infinite; }
+.is-reveal.tone-common .gm-rays { opacity: 0.55; }
+
+/* 6. The Pokémon appears: a white silhouette that fills in with color */
+.gacha-reveal {
+  position: absolute; left: 50%; top: calc(212 / 480 * 100%); width: 50%; aspect-ratio: 1;
+  transform: translate(-50%, -50%); pointer-events: none;
+}
+.gacha-float { width: 100%; height: 100%; animation: gm-float 3.4s ease-in-out 1.1s infinite; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18)); }
+.gacha-reveal .stage-sprite { width: 100%; height: 100%; animation: gm-sprite-in 1.05s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.gacha-reveal .stage-sprite.is-missing { width: 64%; height: 64%; margin: 18%; font-size: 48px; }
+.is-static .gacha-reveal .stage-sprite { animation: gm-fade-in 0.25s ease-out both; }
+.is-static .gacha-float { animation-delay: 0s; }
+
+/* Summon failed: the machine jams */
+.is-jam .gm-machine { animation: gm-jam var(--t-jam) ease-in-out; }
+
+/* ---------- Keyframes ---------- */
+@keyframes gm-crank { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+@keyframes gm-crank-hint { 0%, 80%, 100% { transform: rotate(0); } 86% { transform: rotate(-14deg); } 93% { transform: rotate(8deg); } }
+@keyframes gm-jiggle {
+  from { transform: translate(0, 0) rotate(0); }
+  to { transform: translate(var(--jx), var(--jy)) rotate(10deg); }
+}
+@keyframes gm-rumble {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(0.8px, -0.5px); }
+  75% { transform: translate(-0.8px, 0.4px); }
+}
+@keyframes gm-drop {
+  0% { transform: translate(180px, 326px); animation-timing-function: cubic-bezier(0.5, 0, 1, 1); }
+  45% { transform: translate(180px, 392px); animation-timing-function: cubic-bezier(0, 0, 0.4, 1); }
+  62% { transform: translate(180px, 374px); animation-timing-function: cubic-bezier(0.6, 0, 1, 1); }
+  76% { transform: translate(180px, 392px); animation-timing-function: cubic-bezier(0, 0, 0.4, 1); }
+  86% { transform: translate(180px, 386px); animation-timing-function: cubic-bezier(0.6, 0, 1, 1); }
+  100% { transform: translate(180px, 392px); }
+}
+@keyframes gm-drop-spin { from { transform: rotate(-70deg); } to { transform: rotate(0); } }
+@keyframes gm-flap {
+  0% { transform: scaleY(1); }
+  18%, 50% { transform: scaleY(0.12); }
+  78% { transform: scaleY(1.08); }
+  100% { transform: scaleY(1); }
+}
+@keyframes gm-approach {
+  0% { transform: translate(180px, 392px) scale(1); }
+  28% { transform: translate(180px, 352px) scale(1.4); }
+  100% { transform: translate(180px, 212px) scale(3.3); }
+}
+@keyframes gm-roll { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+@keyframes gm-wobble {
+  0%, 8% { transform: rotate(0); }
+  14% { transform: rotate(-24deg); }
+  20% { transform: rotate(17deg); }
+  26% { transform: rotate(-9deg); }
+  31%, 47% { transform: rotate(0); }
+  53% { transform: rotate(24deg); }
+  59% { transform: rotate(-17deg); }
+  65% { transform: rotate(9deg); }
+  70%, 100% { transform: rotate(0); }
+}
+@keyframes gm-glow { from { opacity: 0.1; } to { opacity: 1; } }
+@keyframes gm-aura { from { opacity: 0.45; transform: scale(0.85); } to { opacity: 1; transform: scale(1.12); } }
+@keyframes gm-aura-soft { from { opacity: 0.2; transform: scale(0.8); } to { opacity: 0.55; transform: scale(1); } }
+@keyframes gm-twinkle { from { opacity: 0.1; } to { opacity: 1; } }
+@keyframes gm-lid {
+  0% { transform: rotate(0); opacity: 1; }
+  55% { opacity: 1; }
+  100% { transform: rotate(-135deg); opacity: 0; }
+}
+@keyframes gm-bottom {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(16px); opacity: 0; }
+}
+@keyframes gm-fade-out { to { opacity: 0; } }
+@keyframes gm-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes gm-flash {
+  0% { transform: scale(0.4); opacity: 0; }
+  30% { opacity: 0.95; }
+  70% { transform: scale(9); opacity: 0.9; }
+  100% { transform: scale(15); opacity: 0; }
+}
+@keyframes gm-burst {
+  0% { transform: translate(0, 0) scale(0.2) rotate(0); opacity: 0; }
+  12% { opacity: 1; }
+  65% { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1) rotate(200deg); opacity: 0; }
+}
+@keyframes gm-spin { to { transform: rotate(360deg); } }
+@keyframes gm-sprite-in {
+  0% { transform: scale(0.1); opacity: 0; filter: brightness(0) invert(1) drop-shadow(0 0 10px var(--ray)); }
+  22% { transform: scale(1.14); opacity: 1; filter: brightness(0) invert(1) drop-shadow(0 0 10px var(--ray)); }
+  42% { transform: scale(0.96); filter: brightness(0) invert(1) drop-shadow(0 0 10px var(--ray)); }
+  58% { transform: scale(1.02); filter: brightness(0) invert(1) drop-shadow(0 0 8px var(--ray)); }
+  100% { transform: scale(1); opacity: 1; filter: brightness(1) invert(0) drop-shadow(0 0 0 transparent); }
+}
+@keyframes gm-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes gm-jam {
+  0%, 100% { transform: translate(0, 0); }
+  15% { transform: translate(-5px, 0) rotate(-1deg); }
+  35% { transform: translate(5px, 0) rotate(1deg); }
+  55% { transform: translate(-3px, 0); }
+  75% { transform: translate(2px, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gacha *, .gacha-float, .gacha-reveal .stage-sprite { animation: none !important; transition: none !important; }
+}

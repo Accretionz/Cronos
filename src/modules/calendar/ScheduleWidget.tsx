@@ -1,4 +1,4 @@
-import { addDays, formatDay, moduleHref, todayKey } from "../../core";
+import { addDays, formatDay, useToday } from "../../core";
 import { useAgenda } from "./agenda";
 import { AgendaList } from "./AgendaList";
 import "./calendar.css";
@@ -8,7 +8,7 @@ const MAX_UPCOMING = 4;
 
 /** Dashboard tile: today's events, then the next few in the coming week. */
 export function ScheduleWidget() {
-  const today = todayKey();
+  const today = useToday();
   const agenda = useAgenda(today, addDays(today, LOOKAHEAD_DAYS));
 
   const todays = (agenda.get(today) ?? []).filter((e) => e.kind === "event");
@@ -21,7 +21,7 @@ export function ScheduleWidget() {
   return (
     <div className="schedule">
       {todays.length === 0 ? (
-        <p className="muted">No events today.</p>
+        <p className="muted widget-empty">Nothing scheduled today.</p>
       ) : (
         <AgendaList entries={todays} />
       )}
@@ -31,9 +31,6 @@ export function ScheduleWidget() {
           <AgendaList entries={upcoming} showDay={formatDay} />
         </>
       )}
-      <a className="widget-link" href={moduleHref("calendar")}>
-        Open calendar →
-      </a>
     </div>
   );
 }
