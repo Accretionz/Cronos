@@ -451,5 +451,6 @@ function authMessage(status: number, body: Record<string, unknown>): string {
 function withAuthLock(work: () => Promise<void>): Promise<void> {
   const locks = typeof navigator !== "undefined" ? (navigator as Navigator & { locks?: LockManager }).locks : undefined;
   if (!locks?.request) return work();
-  return locks.request("cronos-cloud-auth", () => work()) as Promise<void>;
+  // request() resolves with whatever the callback returns; we only need to know it's done.
+  return locks.request("cronos-cloud-auth", () => work()).then(() => undefined);
 }
