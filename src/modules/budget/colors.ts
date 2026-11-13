@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { useItems, type ItemStore } from "../../core";
+import type { ItemStore } from "../../core";
+import { useBudgetSettings, writeSettings } from "./settings";
 
 /**
  * Category colors.
@@ -74,26 +75,13 @@ export function cssColor(choice: string): string {
 /** Color used for the pie's folded "N more categories" slice. */
 export const OTHER_SLICE_COLOR = "var(--cat-gray)";
 
-/* ---------- Saved choices (one settings item, stored with the rest of the data) ---------- */
+/* ---------- Saved choices (in the budget settings item, see settings.ts) ---------- */
 
-export const BUDGET_SETTINGS = "budget-settings";
-
-type BudgetSettingsData = {
-  /** Colors the user picked. */
-  categoryColors: Record<string, string>;
-  /** Colors handed out automatically to new custom categories (not "customized"). */
-  autoColors?: Record<string, string>;
-};
-
-function readSettings(data: unknown): Required<BudgetSettingsData> {
-  const d = (data ?? {}) as Partial<BudgetSettingsData>;
-  return { categoryColors: d.categoryColors ?? {}, autoColors: d.autoColors ?? {} };
-}
+export { BUDGET_SETTINGS } from "./settings";
 
 /** The user's color choices, merged over the defaults. */
 export function useCategoryColors() {
-  const [settings] = useItems({ type: BUDGET_SETTINGS });
-  const { categoryColors: chosen, autoColors: auto } = readSettings(settings?.data);
+  const { categoryColors: chosen, autoColors: auto } = useBudgetSettings();
   // Compare by content: the objects are rebuilt on every store change.
   const key = JSON.stringify([chosen, auto]);
 
@@ -113,22 +101,6 @@ export function useCategoryColors() {
       anyCustomized: Object.keys(chosen).length > 0,
     };
   }, [key]);
-}
-
-// Writes go one at a time so two quick changes can't create two settings items.
-let queue: Promise<unknown> = Promise.resolve();
-
-function writeSettings(store: ItemStore, update: (s: Required<BudgetSettingsData>) => Required<BudgetSettingsData>) {
-  const job = queue.then(async () => {
-    const [existing] = store.query({ type: BUDGET_SETTINGS });
-    const current = readSettings(existing?.data);
-    const next = update({ categoryColors: { ...current.categoryColors }, autoColors: { ...current.autoColors } });
-    if (JSON.stringify(next) === JSON.stringify(current)) return;
-    if (existing) await store.update(existing.id, { data: { ...existing.data, ...next } });
-    else await store.create<BudgetSettingsData>({ type: BUDGET_SETTINGS, title: "Budget settings", data: next });
-  });
-  queue = job.catch((err) => console.error("[budget] saving colors failed", err));
-  return job;
 }
 
 /** Set one category's color; pass null to go back to its default. */

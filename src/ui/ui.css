@@ -137,6 +137,93 @@
   .ui-select-option { min-height: 42px; font-size: 15px; }
 }
 
+/* ---------- Date field (ui/DatePicker.tsx): looks like a Select, opens a themed month calendar ---------- */
+.ui-date .ui-select-value { gap: 8px; }
+.ui-date-icon { flex-shrink: 0; color: var(--muted); transition: color 0.12s; }
+.ui-date:hover:not(:disabled) .ui-date-icon, .ui-date.is-open .ui-date-icon { color: var(--accent); }
+.ui-date.is-empty .ui-select-text { color: var(--muted); }
+.field .ui-date, .event-form .ui-date { width: 100%; }
+
+.ui-date-pop {
+  position: fixed; z-index: 1000; box-sizing: border-box; padding: 12px 12px 8px;
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-pop);
+  transform-origin: top left; animation: ui-select-in 0.14s var(--ease);
+  user-select: none; -webkit-user-select: none;
+}
+.ui-date-pop.is-up { transform-origin: bottom left; }
+.ui-date-head { display: flex; align-items: center; gap: 4px; height: 34px; margin: 0 0 8px; }
+.ui-date-title {
+  flex: 1; text-align: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: -0.01em;
+}
+.ui-date-nav {
+  width: 32px; height: 32px; display: grid; place-items: center; flex-shrink: 0;
+  background: none; border: 0; border-radius: var(--radius-sm); color: var(--muted); cursor: pointer;
+  transition: background-color 0.12s, color 0.12s;
+}
+.ui-date-nav:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.ui-date-nav:disabled { opacity: 0.35; cursor: default; }
+
+/* The title opens the month grid (and the year grid from there) */
+.ui-date-title-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px 5px 10px; border: 0; border-radius: var(--radius-sm);
+  background: none; color: var(--text); cursor: pointer;
+  font: inherit; font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: -0.01em;
+  transition: background-color 0.12s, color 0.12s;
+}
+.ui-date-title-btn:hover { background: var(--surface-2); }
+.ui-date-title-btn:hover .chevron { opacity: 1; }
+.ui-date-title-btn .chevron { opacity: 0.7; }
+
+/* All three views fill the same space, so the popover never changes size */
+.ui-date-grid { display: grid; gap: 2px; height: 254px; align-content: start; animation: ui-date-swap 0.14s var(--ease); }
+.ui-date-grid.is-months, .ui-date-grid.is-years { grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 6px; align-content: stretch; padding: 4px 0; box-sizing: border-box; }
+@keyframes ui-date-swap { from { opacity: 0; transform: scale(0.97); } }
+.ui-date-big-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; align-items: center; }
+.ui-date-big {
+  display: grid; place-items: center; height: 40px; border-radius: 999px; cursor: pointer;
+  font-size: 14px; font-variant-numeric: tabular-nums;
+  transition: background-color 0.1s, color 0.1s;
+}
+.ui-date-big.is-active { background: var(--surface-2); }
+.ui-date-big.is-today { color: var(--accent); font-weight: 700; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, transparent); }
+.ui-date-big.is-selected { background: var(--accent); color: var(--accent-ink); font-weight: 700; box-shadow: none; }
+.ui-date-big.is-selected.is-active { background: color-mix(in srgb, var(--accent) 88%, var(--text)); }
+.ui-date-big.is-disabled { opacity: 0.3; cursor: not-allowed; background: none; }
+.ui-date-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.ui-date-dow { display: grid; place-items: center; height: 26px; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
+.ui-date-day {
+  position: relative; display: grid; place-items: center; width: 36px; height: 36px; justify-self: center; border-radius: 50%;
+  font-size: 14px; font-variant-numeric: tabular-nums; cursor: pointer;
+  transition: background-color 0.1s, color 0.1s;
+}
+.ui-date-day.is-outside { color: var(--muted); opacity: 0.55; }
+.ui-date-day.is-active { background: var(--surface-2); }
+.ui-date-day.is-today { color: var(--accent); font-weight: 700; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, transparent); }
+.ui-date-day.is-selected { background: var(--accent); color: var(--accent-ink); font-weight: 700; box-shadow: none; opacity: 1; }
+.ui-date-day.is-selected.is-active { background: color-mix(in srgb, var(--accent) 88%, var(--text)); }
+.ui-date-day.is-disabled { opacity: 0.3; cursor: not-allowed; background: none; text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent); }
+
+.ui-date-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+.ui-date-link {
+  background: none; border: 0; padding: 6px 8px; border-radius: 8px; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--accent);
+}
+.ui-date-link.is-quiet { color: var(--muted); font-weight: 500; }
+.ui-date-link:hover:not(:disabled) { background: var(--surface-2); }
+.ui-date-link.is-quiet:hover:not(:disabled) { color: var(--text); }
+.ui-date-link:disabled { opacity: 0.4; cursor: default; }
+
+@media (max-width: 700px) {
+  .ui-date-day { font-size: 15px; }
+  /* Half-width fields are tight on phones: the calendar icon already says what this is */
+  .ui-date .chevron { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-date-pop, .ui-date-grid, .ui-date-day, .ui-date-big, .ui-date-nav, .ui-date-title-btn, .ui-date-icon { animation: none; transition: none; }
+}
+
 /* ---------- Checklist cards: "Show more" and the folded "✓ N completed" line ---------- */
 .widget-toggle {
   display: inline-flex; align-items: center; gap: 6px;

@@ -279,6 +279,23 @@ Each account has its own data; a new account starts empty.
 
 Setup takes about five minutes: see [`supabase/README.md`](supabase/README.md).
 
+### Deploying (Vercel, Netlify, …)
+
+`.env.local` stays on your computer (it isn't committed), so a hosted build needs the same
+two values in the host's settings. They're built into the app, so **redeploy after adding or
+changing them**.
+
+1. **Vercel:** Project → **Settings → Environment Variables**: add `VITE_SUPABASE_URL` and
+   `VITE_SUPABASE_PUBLISHABLE_KEY` (the `NEXT_PUBLIC_…` names work too) for Production (and
+   Preview), then **Deployments → ⋯ → Redeploy**. Vercel detects Vite: build `npm run build`,
+   output `dist`.
+2. **Supabase → Authentication → URL Configuration:** set **Site URL** to the hosted address
+   (e.g. `https://cronos.vercel.app`) and add `https://cronos.vercel.app/**` to **Redirect
+   URLs**, keeping `http://localhost:5173/**` for development. Otherwise confirmation and
+   password-reset emails link back to localhost.
+
+A build without the values shows "Cronos isn't available: Not connected to a database".
+
 Turning Cronos into a phone app is planned in [`docs/MOBILE.md`](docs/MOBILE.md).
 
 ## Debugging

@@ -37,9 +37,9 @@ export function AuthScreen({ notice }: { notice?: string | null }) {
             <div className="card account-auth" role="alert">
               <h2 className="card-title">Not connected to a database</h2>
               <p className="muted">
-                This copy of Cronos was built without its Supabase settings. Add <code>VITE_SUPABASE_URL</code> and{" "}
-                <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> to <code>.env.local</code>, then restart <code>npm run dev</code> or rebuild. See{" "}
-                <code>supabase/README.md</code>.
+                This copy of Cronos was built without its Supabase settings. Set <code>VITE_SUPABASE_URL</code> and{" "}
+                <code>VITE_SUPABASE_PUBLISHABLE_KEY</code>: in <code>.env.local</code> on your computer (then restart <code>npm run dev</code>), or in
+                your host's environment variables (e.g. Vercel → Settings → Environment Variables), then redeploy.
               </p>
             </div>
           )}

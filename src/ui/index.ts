@@ -3,4 +3,5 @@ export { RowMenu, type MenuAction } from "./RowMenu";
 export { Modal } from "./Modal";
 export { StatTile } from "./StatTile";
 export { Select, type SelectOption } from "./Select";
+export { DatePicker } from "./DatePicker";
 export { CompletedGroup, useDoubleClickGuard, DOUBLE_CLICK_GUARD_MS } from "./Completed";

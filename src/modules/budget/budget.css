@@ -162,7 +162,7 @@
   .txn-row.is-editing { animation: none; }
 }
 
-/* Settings → category colors */
+/* Settings → categories (BudgetSettings.tsx) */
 .cat-settings { display: grid; gap: 16px; }
 .cat-settings-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
 .cat-settings-head > div { flex: 1; min-width: 220px; }
@@ -175,6 +175,37 @@
 .cat-color-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 34px; }
 .cat-color-line .cat-pill { font-size: 13px; padding: 2px 10px 2px 8px; }
 .cat-twin { font-size: 12px; color: var(--danger); }
+
+/* Settings → categories: default for new entries, and drag (or ↑/↓) to reorder */
+.cat-group-head { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; margin: 0 0 6px; }
+.cat-group-head .cat-group-title { margin: 0; flex: 1; min-width: 90px; }
+.cat-default { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.cat-default .ui-select { min-width: 150px; color: var(--text); }
+.cat-order-reset { margin: 0; font-size: 13px; }
+.cat-default-badge {
+  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent);
+}
+.cat-grip {
+  display: grid; place-items: center; width: 26px; height: 30px; margin: 0 -4px 0 -6px; flex-shrink: 0;
+  background: none; border: 0; border-radius: 6px; color: var(--muted); cursor: grab;
+  opacity: 0.55; touch-action: none; transition: opacity 0.12s, background-color 0.12s, color 0.12s;
+}
+.cat-color-row:hover .cat-grip, .cat-grip:focus-visible { opacity: 1; }
+.cat-grip:hover { background: var(--surface-2); color: var(--text); }
+.cat-grip:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; color: var(--accent); }
+.cat-grip-hint { letter-spacing: -2px; color: var(--muted); margin-right: 2px; }
+/* While dragging: the lifted row floats over the others */
+.cat-color-list.is-reordering, .cat-color-list.is-reordering .cat-grip { cursor: grabbing; }
+.cat-color-list.is-reordering .cat-color-row:not(.is-dragging) { transition: none; }
+.cat-color-row { position: relative; }
+.cat-color-row.is-dragging {
+  z-index: 2; border-radius: var(--radius-sm); border-bottom-color: transparent;
+  background: var(--surface); box-shadow: var(--shadow-pop), 0 0 0 1px var(--border);
+  padding-left: 6px; padding-right: 6px; margin: 0 -6px;
+}
+.cat-color-row.is-dragging .cat-grip { opacity: 1; color: var(--accent); }
+@media (hover: none) { .cat-grip { opacity: 0.8; } }
 .cat-reset { margin: 0; font-size: 13px; }
 .color-btn {
   display: inline-flex; align-items: center; gap: 8px; min-width: 112px;

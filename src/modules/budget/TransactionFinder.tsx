@@ -2,8 +2,9 @@ import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type R
 import { useItems } from "../../core";
 import { useCategoryColors } from "./colors";
 import { TransactionList } from "./components";
-import { Select } from "../../ui";
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, TXN, formatMoney, monthBounds, monthLabel, parseMoney, shiftMonth, type Transaction, type TxnKind } from "./model";
+import { DatePicker, Select } from "../../ui";
+import { naturalOrder, orderCategories, useCategoryPrefs } from "./categories";
+import { INCOME_CATEGORIES, TXN, formatMoney, monthBounds, monthLabel, parseMoney, shiftMonth, type Transaction, type TxnKind } from "./model";
 import {
   DEFAULT_FILTER,
   filterTxns,
@@ -139,11 +140,11 @@ export function TransactionFinder({
           <div className="finder-dates">
             <label className="field">
               <span>From</span>
-              <input type="date" value={filter.from} onChange={(e) => set({ from: e.target.value })} />
+              <DatePicker value={filter.from} onChange={(from) => set({ from })} max={filter.to || undefined} clearable placeholder="Any date" />
             </label>
             <label className="field">
               <span>To</span>
-              <input type="date" value={filter.to} onChange={(e) => set({ to: e.target.value })} />
+              <DatePicker value={filter.to} onChange={(to) => set({ to })} min={filter.from || undefined} clearable placeholder="Any date" />
             </label>
           </div>
         )}
@@ -270,6 +271,8 @@ function Popover({ label, active, children, wide }: { label: ReactNode; active: 
 
 function CategoryPicker({ all, kind, selected, onChange }: { all: Transaction[]; kind: TxnFilter["kind"]; selected: string[]; onChange: (c: string[]) => void }) {
   const { colorFor } = useCategoryColors();
+  const prefs = useCategoryPrefs();
+  const prefsKey = JSON.stringify([prefs.order("expense"), prefs.order("income")]);
   const groups = useMemo(() => {
     const counts = new Map<string, { kind: TxnKind; n: number }>();
     for (const t of all) {
@@ -277,18 +280,13 @@ function CategoryPicker({ all, kind, selected, onChange }: { all: Transaction[];
       c.n++;
       counts.set(t.data.category, c);
     }
+    // In the user's category order (Settings → Budget).
     const order = (k: TxnKind) => {
-      const defaults = k === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
-      return [...counts.entries()]
-        .filter(([, v]) => v.kind === k)
-        .sort(([a], [b]) => {
-          const ia = defaults.indexOf(a), ib = defaults.indexOf(b);
-          return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
-        })
-        .map(([name, v]) => ({ name, n: v.n }));
+      const names = [...counts.entries()].filter(([, v]) => v.kind === k).map(([name]) => name);
+      return orderCategories(naturalOrder(k, names), prefs.order(k)).map((name) => ({ name, n: counts.get(name)!.n }));
     };
     return { expense: order("expense"), income: order("income") };
-  }, [all]);
+  }, [all, prefsKey]);
   const shown = (["expense", "income"] as TxnKind[]).filter((k) => kind === "all" || kind === k);
   const toggle = (c: string) => onChange(selected.includes(c) ? selected.filter((x) => x !== c) : [...selected, c]);
   const label = selected.length === 0 ? "Categories" : selected.length === 1 ? selected[0] : `${selected.length} categories`;

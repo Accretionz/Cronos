@@ -87,7 +87,7 @@ never shifts with time zones. Money is stored in integer cents.
 | `task` | Tasks | `status` open/done |
 | `daily` | Dailies | completions in `data.doneDays` |
 | `event` | Calendar | repeats in `recurrence` (RRULE) |
-| `transaction`, `budget-limit`, `budget-settings` | Budget | cents; one settings item |
+| `transaction`, `budget-limit`, `budget-settings` | Budget | cents; one settings item (`budget/settings.ts`): category colors, `categoryOrder` and `defaultCategory` per kind (Settings → Budget → Categories; `budget/categories.ts`) |
 | `xp` | Level & XP | ledger; total XP = sum |
 | `pokemon-summon` | Summon | log: one per summon (dex, name, types, rarity, shiny) |
 | `pokemon` | Field (defined in `src/pokemon/owned.ts`) | **one per Pokémon you own**: species fields + `home` (`field`/`storage`), optional `nickname`, `teamSlot` (0–5), `source`/`sourceId`, and its individual values: `growthRate`, `pid` (decides nature, gender, ability), `ivs`, `evs`. Created by Summon; backfilled from past summons with stable ids; older items get `pid`/`ivs` from their id (upgrade) and `growthRate` from PokéAPI (`fillSpeciesFacts`) |
@@ -257,6 +257,16 @@ table (`items`, one row per item per account, protected by row-level security).
   a divider. It works like a native one from the keyboard (↑/↓, Home/End, Enter, Esc, type a
   letter to jump), keeps focus on its button (so it works inside dialogs), and opens upward when
   there's no room below. Dropdown-style buttons use `<span className="chevron" />`.
+- Dates use `<DatePicker>` from `ui` (ui/DatePicker.tsx), never `<input type="date">`: the
+  browser's calendar can't be themed. Closed it looks like a `<Select>` with a calendar icon and a
+  friendly date ("Today", "Mon, Nov 16"); open it's a themed month grid (Sunday first, today
+  ringed, the chosen day in `--accent`) with Today and, if `clearable`, Clear. `value` is a day key
+  or `""`; `min`/`max` grey out days, months and years. Click the month title for a grid of months,
+  and the year there for a page of 12 years. Moving the mouse only highlights: the page shown
+  changes only with the ‹ › arrows, the title or the keyboard. Like `<Select>` it keeps focus on
+  its button (works in dialogs) and opens upward when there's no room. Keys: ←/→ day, ↑/↓ week,
+  Home/End, PgUp/PgDn month (Shift: year), M months, Y years, T today, Enter pick, Delete clear,
+  Esc back a level / close. The date math is in `ui/calendarGrid.ts` (tested).
 - Checklists on the Today page (Dailies, Today's tasks): a checked row leaves the list at once
   and the next one moves up into its place, so you can tick a list off by clicking one spot.
   Spread `useDoubleClickGuard()` from `ui` on the list (it ignores a second check within 250 ms,

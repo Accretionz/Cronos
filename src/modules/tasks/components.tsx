@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { dayOf, formatDay, useCore, useToday, type Item } from "../../core";
-import { Select } from "../../ui";
+import { DatePicker, Select } from "../../ui";
 import { TASK, type Priority, type Task, type TaskData } from "./model";
 
 export function AddTaskForm({ defaultDate = "", compact = false }: { defaultDate?: string; compact?: boolean }) {
@@ -32,7 +32,7 @@ export function AddTaskForm({ defaultDate = "", compact = false }: { defaultDate
       />
       {!compact && (
         <>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Date" />
+          <DatePicker value={date} onChange={setDate} label="Date" clearable placeholder="No date" />
           <Select<Priority>
             value={priority}
             onChange={setPriority}

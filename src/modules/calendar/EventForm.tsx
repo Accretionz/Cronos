@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { dayOf, useCore } from "../../core";
-import { Select } from "../../ui";
+import { DatePicker, Select } from "../../ui";
 import {
   EVENT,
   REPEAT_LABELS,
@@ -67,7 +67,7 @@ export function EventForm({ event, defaultDay, onDone }: Props) {
       />
       <label className="field">
         <span>Date</span>
-        <input type="date" value={day} onChange={(e) => setDay(e.target.value)} required />
+        <DatePicker value={day} onChange={setDay} />
       </label>
       <div className="field-row">
         <label className="field">

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEven
 import { dayOf, formatDay, useCore, useItems, useModules } from "../../core";
 import {
   EXPENSE_CATEGORIES,
-  INCOME_CATEGORIES,
   LIMIT,
   TXN,
   formatMoney,
@@ -15,29 +14,37 @@ import {
   type TxnKind,
 } from "./model";
 import { useCategoryColors } from "./colors";
+import { builtInCategories, naturalOrder, orderCategories, pickDefault, useCategoryPrefs } from "./categories";
 import { pointsForIncome } from "./rewards";
 import { highlightRanges } from "./search";
-import { RowMenu, Select } from "../../ui";
+import { DatePicker, RowMenu, Select } from "../../ui";
 
 /* ---------- Add a transaction ---------- */
 
 const NEW_CATEGORY = "__new__";
 
 /**
- * Every category to offer for a kind: the defaults first, then any custom
- * categories already used in transactions (or given a limit), alphabetically.
+ * Every category to offer for a kind (the built-in ones plus any custom categories already used
+ * in transactions or given a limit), in the user's order from Settings → Budget. Without a saved
+ * order: built-in first, then custom alphabetically.
  */
 export function useCategoryOptions(kind: TxnKind): string[] {
   const txns = useItems({ type: TXN }) as Transaction[];
   const limits = useItems({ type: LIMIT }) as BudgetLimit[];
+  const saved = useCategoryPrefs().order(kind);
+  const savedKey = JSON.stringify(saved ?? null);
   return useMemo(() => {
-    const defaults = kind === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
-    const custom = new Set<string>();
-    for (const t of txns) if (t.data.kind === kind) custom.add(t.data.category);
-    if (kind === "expense") for (const l of limits) custom.add(l.data.category);
-    defaults.forEach((d) => custom.delete(d));
-    return [...defaults, ...[...custom].sort((a, b) => a.localeCompare(b))];
-  }, [kind, txns, limits]);
+    const names = new Set(builtInCategories(kind));
+    for (const t of txns) if (t.data.kind === kind) names.add(t.data.category);
+    if (kind === "expense") for (const l of limits) names.add(l.data.category);
+    return orderCategories(naturalOrder(kind, names), saved);
+  }, [kind, txns, limits, savedKey]);
+}
+
+/** The category a new transaction of this kind starts with (Settings → Budget → Default). */
+export function useDefaultCategory(kind: TxnKind): string {
+  const options = useCategoryOptions(kind);
+  return pickDefault(kind, options, useCategoryPrefs().savedDefault(kind));
 }
 
 export function AddTransactionForm({ defaultDay }: { defaultDay: string }) {
@@ -64,7 +71,20 @@ export function TransactionForm({
   const [kind, setKind] = useState<TxnKind>(txn?.data.kind ?? "expense");
   const [amount, setAmount] = useState(txn ? (txn.data.amountCents / 100).toFixed(2) : "");
   const [title, setTitle] = useState(txn?.title ?? "");
-  const [category, setCategory] = useState(txn?.data.category ?? EXPENSE_CATEGORIES[1]);
+  const expenseDefault = useDefaultCategory("expense");
+  const incomeDefault = useDefaultCategory("income");
+  const defaultFor = (k: TxnKind) => (k === "expense" ? expenseDefault : incomeDefault);
+  const [category, setCategory] = useState(txn?.data.category ?? expenseDefault);
+  // Until the user picks a category themselves, a new entry follows the default (so changing it in
+  // Settings shows up here straight away).
+  const [chose, setChose] = useState(editing);
+  useEffect(() => {
+    if (!chose) setCategory(defaultFor(kind));
+  }, [chose, kind, expenseDefault, incomeDefault]);
+  const pickCategory = (c: string) => {
+    setChose(true);
+    setCategory(c);
+  };
   const [newCategory, setNewCategory] = useState("");
   const [day, setDay] = useState(txn?.scheduledFor ? dayOf(txn.scheduledFor) : defaultDay);
 
@@ -81,7 +101,8 @@ export function TransactionForm({
   const switchKind = (k: TxnKind) => {
     if (k === kind) return;
     setKind(k);
-    setCategory(k === "expense" ? EXPENSE_CATEGORIES[1] : INCOME_CATEGORIES[0]);
+    setCategory(defaultFor(k));
+    setChose(false);
     setNewCategory("");
   };
 
@@ -150,9 +171,9 @@ export function TransactionForm({
           <span>Category</span>
           <Select
             value={category}
-            onChange={setCategory}
+            onChange={pickCategory}
             options={[
-              ...categories.map((c) => ({ value: c, label: c, color: colorFor(c) })),
+              ...categories.map((c) => ({ value: c, label: c, color: colorFor(c), hint: !editing && c === defaultFor(kind) ? "Default" : undefined })),
               { value: NEW_CATEGORY, label: "+ New category…", divider: true },
             ]}
           />
@@ -170,7 +191,7 @@ export function TransactionForm({
         )}
         <label className="field">
           <span>Date</span>
-          <input type="date" value={day} onChange={(e) => setDay(e.target.value)} />
+          <DatePicker value={day} onChange={setDay} />
         </label>
       </div>
       {amount !== "" && cents === null && <p className="hint hint-error">Enter an amount like 12.50</p>}
@@ -441,7 +462,10 @@ export function LimitsEditor({ limits, usedCategories, onDone }: {
   onDone: () => void;
 }) {
   const { store } = useCore();
-  const names = [...new Set([...EXPENSE_CATEGORIES, ...limits.map((l) => l.data.category), ...usedCategories])];
+  const saved = useCategoryPrefs().order("expense");
+  const [names] = useState(() =>
+    orderCategories(naturalOrder("expense", [...EXPENSE_CATEGORIES, ...limits.map((l) => l.data.category), ...usedCategories]), saved),
+  );
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(
       names.map((n) => {

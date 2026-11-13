@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { addDays, formatDay, useCore, useModules, useToday } from "../../core";
-import { RowMenu, Select, type SelectOption } from "../../ui";
+import { DatePicker, RowMenu, Select, type SelectOption } from "../../ui";
 import type { JobSettings } from "./settings";
 import {
   APPLY_POINTS,
@@ -287,7 +287,7 @@ export function ApplicationForm({ app, onDone }: { app?: JobApplication; onDone:
         {sent && (
           <label className="field">
             <span>Applied on</span>
-            <input type="date" value={appliedOn} max={today} onChange={(e) => setAppliedOn(e.target.value)} />
+            <DatePicker value={appliedOn} onChange={setAppliedOn} max={today} />
           </label>
         )}
       </div>
@@ -333,7 +333,7 @@ export function ApplicationForm({ app, onDone }: { app?: JobApplication; onDone:
             </label>
             <label className="field">
               <span>Follow up on</span>
-              <input type="date" value={followUpOn} onChange={(e) => setFollowUpOn(e.target.value)} />
+              <DatePicker value={followUpOn} onChange={setFollowUpOn} clearable placeholder="Not set" />
             </label>
           </div>
           <div className="job-quick-dates">
